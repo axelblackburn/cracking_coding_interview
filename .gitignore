@@ -1,0 +1,16 @@
+# Compiled artifacts
+**/target/
+**/Cargo.lock
+
+# Distribution
+/dist/
+
+# User-specific files
+/.vscode/
+/.idea/
+*.swp
+*~
+/tmp
+
+# OS generated files
+.DS_Store
