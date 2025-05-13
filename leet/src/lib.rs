@@ -15,6 +15,10 @@ pub fn is_unique_1_1_hashmap(string: String) -> bool {
 pub fn is_unique_1_1_bit_vector(string: String) -> bool {
     let mut bit_vector: usize = 0;
     for c in string.chars() {
+        if !c.is_ascii_alphabetic() {
+            panic!("Only alphabetic characters are allowed");
+        }
+
         let index = c as usize - 'A' as usize;
         if bit_vector & (1 << index) != 0 {
             return false;
