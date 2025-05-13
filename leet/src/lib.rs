@@ -221,6 +221,33 @@ pub fn string_compression_1_6(string: String) -> String {
     }
 }
 
+// Problem 1.7: Rotate Matrix
+// Given an image represented by an NxN matrix, where each pixel in the image is 4 bytes, write a method to rotate the image by 90 degrees. Can you do this in place?
+
+pub fn rotate_matrix_1_7(matrix: &mut Vec<Vec<i32>>) {
+    let n = matrix.len();
+    for layer in 0..n / 2 {
+        let first = layer;
+        let last = n - layer - 1;
+        for i in first..last {
+            let offset = i - first;
+            let top_left = matrix[first][i];
+
+            // bottom left -> top left
+            matrix[first][i] = matrix[last - offset][first];
+
+            // bottom right -> bottom left
+            matrix[last - offset][first] = matrix[last][last - offset];
+
+            // top right -> bottom right
+            matrix[last][last - offset] = matrix[i][last];
+
+            // top left -> top right 
+            matrix[i][last] = top_left;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -333,5 +360,21 @@ mod tests {
         let test_string = String::from("abc");
         let result = string_compression_1_6(test_string);
         assert_eq!(result, "abc");
+    }
+
+    #[test]
+    fn test_rotate_matrix_1_7() {
+        let mut matrix = vec![
+            vec![1, 2, 3],
+            vec![4, 5, 6],
+            vec![7, 8, 9],
+        ];
+        rotate_matrix_1_7(&mut matrix);
+        let expected_result = vec![
+            vec![7, 4, 1],
+            vec![8, 5, 2],
+            vec![9, 6, 3],
+        ];
+        assert_eq!(matrix, expected_result);
     }
 }
