@@ -1,8 +1,15 @@
-use data_structures;
 
-pub fn hello_from_leet() -> String {
-    let message = data_structures::hello_from_data_structures();
-    format!("Hello from leet!  {}", message)
+use std::collections::HashMap;
+
+pub fn is_unique_1_1_hashmap(string : String) -> bool {
+    let mut map = HashMap::new();
+    for c in string.chars() {
+        if map.contains_key(&c) {
+            return false;
+        }
+        map.insert(c, true);
+    }
+    true
 }
 
 #[cfg(test)]
@@ -10,8 +17,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {
-        let result = hello_from_leet();
-        assert_eq!(result, "Hello from leet!  Hello from data_structures!");
+    fn test_is_unique_1_1_hashmap() {
+        let test_string = String::from("abcdefg");
+        let result = is_unique_1_1_hashmap(test_string);
+        assert_eq!(result, true);
+        let test_string = String::from("abcdeafg");
+        let result = is_unique_1_1_hashmap(test_string);
+        assert_eq!(result, false);
     }
 }
