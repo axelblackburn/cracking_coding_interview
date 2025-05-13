@@ -196,6 +196,31 @@ pub fn one_away_1_5(string_a: String, string_b: String) -> bool {
     true
 }
 
+// Problem 1.6: String Compression
+// Implement a method to perform basic string compression using the counts of repeated characters. For example, the string "aabcccccaaa" would become "a2b1c5a3". If the "compressed" string would not become smaller than the original string, your method should return the original string.
+// You can assume the string has only uppercase and lowercase letters (a-z).
+
+pub fn string_compression_1_6(string: String) -> String {
+    let mut compressed_string = String::new();
+    let mut count = 1;
+
+    for i in 0..string.len() {
+        if i + 1 < string.len() && string.chars().nth(i) == string.chars().nth(i + 1) {
+            count += 1;
+        } else {
+            compressed_string.push(string.chars().nth(i).unwrap());
+            compressed_string.push_str(&count.to_string());
+            count = 1;
+        }
+    }
+
+    if compressed_string.len() < string.len() {
+        compressed_string
+    } else {
+        string
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -298,5 +323,15 @@ mod tests {
         let test_string_b = String::from("bake");
         let result = one_away_1_5(test_string_a, test_string_b);
         assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_string_compression_1_6() {
+        let test_string = String::from("aabcccccaaa");
+        let result = string_compression_1_6(test_string);
+        assert_eq!(result, "a2b1c5a3");
+        let test_string = String::from("abc");
+        let result = string_compression_1_6(test_string);
+        assert_eq!(result, "abc");
     }
 }
