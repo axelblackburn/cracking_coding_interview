@@ -143,6 +143,58 @@ pub fn is_palindrome_permutation_1_4(string: String) -> bool {
     odd_count <= 1
 }
 
+// Problem 1.5: One Away
+// There are three types of edits that can be performed on strings: insert a character, remove a character, or replace a character. Given two strings, write a function to check if they are one edit (or zero edits) away.
+
+pub fn one_away_1_5(string_a: String, string_b: String) -> bool {
+    let (shorter, longer) = if string_a.len() < string_b.len() {
+        (string_a, string_b)
+    } else {
+        (string_b, string_a)
+    };
+
+    let len_shorter = shorter.len();
+    let len_longer = longer.len();
+
+    // If the lengths are equal, check for a replacement
+    if len_shorter == len_longer {
+        let mut found_difference = false;
+        for i in 0..len_shorter {
+            if shorter.chars().nth(i) != longer.chars().nth(i) {
+                if found_difference {
+                    return false;
+                }
+                found_difference = true;
+            }
+        }
+        return true;
+    }
+
+    // If the lengths differ by more than 1, return false
+    if len_longer - len_shorter > 1 {
+        return false;
+    }
+
+    // Check for a removal or insertion
+    let mut found_difference = false;
+    let mut index_longer = 0;
+    for index_shorter in 0..shorter.len() {
+        if shorter.chars().nth(index_shorter) != longer.chars().nth(index_longer) {
+            if found_difference {
+                return false;
+            }
+
+            found_difference = true;
+            // Skip the index of the longer string
+            index_longer += 1;
+        }
+
+        // Always increment the index of the longer string along with the shorter string
+        index_longer += 1;
+    }
+
+    true
+}
 
 #[cfg(test)]
 mod tests {
@@ -225,6 +277,26 @@ mod tests {
         assert_eq!(result, true);
         let test_string = String::from("abcde");
         let result = is_palindrome_permutation_1_4(test_string);
+        assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_one_away_1_5() {
+        let test_string_a = String::from("pale");
+        let test_string_b = String::from("ple");
+        let result = one_away_1_5(test_string_a, test_string_b);
+        assert_eq!(result, true);
+        let test_string_a = String::from("pales");
+        let test_string_b = String::from("pale");
+        let result = one_away_1_5(test_string_a, test_string_b);
+        assert_eq!(result, true);
+        let test_string_a = String::from("pale");
+        let test_string_b = String::from("bale");
+        let result = one_away_1_5(test_string_a, test_string_b);
+        assert_eq!(result, true);
+        let test_string_a = String::from("pale");
+        let test_string_b = String::from("bake");
+        let result = one_away_1_5(test_string_a, test_string_b);
         assert_eq!(result, false);
     }
 }
