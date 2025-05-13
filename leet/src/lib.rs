@@ -98,17 +98,28 @@ pub fn is_permutation_1_2_hashmap(string_a: String, string_b: String) -> bool {
 // Problem 1.3: URLify
 // Write a method to replace all spaces in a string with '%20'. You may assume that the string has sufficient space at the end of the string to hold the additional characters, and that you are given the "true" length of the string.
 
-pub fn urlify(string: String, true_length: usize) -> String {
-    let mut result = String::new();
-    for i in 0..true_length {
-        let c = string.chars().nth(i).unwrap();
-        if c == ' ' {
-            result.push_str("%20");
+pub fn urlify_1_3(string: &mut Vec<char>) {
+    let original_length = string.len();
+    let space_count = string.iter().filter(|&&c| c == ' ').count();
+    let new_length = string.len() + space_count * 2;
+    string.resize(new_length, char::default());
+
+    let mut index = new_length - 1;
+    for i in (0..original_length).rev() {
+        if string[i] == ' ' {
+            string[index] = '0';
+            string[index - 1] = '2';
+            string[index - 2] = '%';
+            if index > 2 {
+                index -= 3;
+            }
         } else {
-            result.push(c);
+            string[index] = string[i];
+            if index > 0 {
+                index -= 1;
+            }
         }
     }
-    result
 }
 
 #[cfg(test)]
@@ -179,9 +190,9 @@ mod tests {
 
     #[test]
     fn test_urlify() {
-        let test_string = String::from("Mr John Smith    ");
-        let true_length = 13;
-        let result = urlify(test_string, true_length);
-        assert_eq!(result, "Mr%20John%20Smith");
+        let mut test_string = "Mr John Doe".chars().collect::<Vec<_>>();
+        urlify_1_3(&mut test_string);
+        let expected_result = "Mr%20John%20Doe".chars().collect::<Vec<_>>();
+        assert_eq!(test_string, expected_result);
     }
 }
