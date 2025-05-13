@@ -122,6 +122,28 @@ pub fn urlify_1_3(string: &mut Vec<char>) {
     }
 }
 
+// Problem 1.4: Palindrome Permutation
+// Given a string, write a function to check if it is a permutation of a palindrome.
+
+pub fn is_palindrome_permutation_1_4(string: String) -> bool {
+    let mut chars_count_map: HashMap<char, usize> = HashMap::new();
+    for c in string.chars() {
+        if !c.is_ascii() {
+            panic!("Only ASCII characters are allowed");
+        }
+
+        if c == ' ' {
+            continue;
+        }
+
+        let count = chars_count_map.entry(c.to_ascii_lowercase()).or_insert(0);
+        *count += 1;
+    }
+    let odd_count = chars_count_map.values().filter(|&&count| count % 2 != 0).count();
+    odd_count <= 1
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -194,5 +216,15 @@ mod tests {
         urlify_1_3(&mut test_string);
         let expected_result = "Mr%20John%20Doe".chars().collect::<Vec<_>>();
         assert_eq!(test_string, expected_result);
+    }
+
+    #[test]
+    fn test_is_palindrome_permutation_1_4() {
+        let test_string = String::from("Tact Coa");
+        let result = is_palindrome_permutation_1_4(test_string);
+        assert_eq!(result, true);
+        let test_string = String::from("abcde");
+        let result = is_palindrome_permutation_1_4(test_string);
+        assert_eq!(result, false);
     }
 }
