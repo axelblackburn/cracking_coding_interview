@@ -95,6 +95,22 @@ pub fn is_permutation_1_2_hashmap(string_a: String, string_b: String) -> bool {
     true
 }
 
+// Problem 1.3: URLify
+// Write a method to replace all spaces in a string with '%20'. You may assume that the string has sufficient space at the end of the string to hold the additional characters, and that you are given the "true" length of the string.
+
+pub fn urlify(string: String, true_length: usize) -> String {
+    let mut result = String::new();
+    for i in 0..true_length {
+        let c = string.chars().nth(i).unwrap();
+        if c == ' ' {
+            result.push_str("%20");
+        } else {
+            result.push(c);
+        }
+    }
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -159,5 +175,13 @@ mod tests {
         let test_string_b = String::from("edcbe");
         let result = is_permutation_1_2_hashmap(test_string_a, test_string_b);
         assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_urlify() {
+        let test_string = String::from("Mr John Smith    ");
+        let true_length = 13;
+        let result = urlify(test_string, true_length);
+        assert_eq!(result, "Mr%20John%20Smith");
     }
 }
