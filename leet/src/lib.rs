@@ -248,6 +248,47 @@ pub fn rotate_matrix_1_7(matrix: &mut Vec<Vec<i32>>) {
     }
 }
 
+// Problem 1.8: Zero Matrix
+// Write an algorithm such that if an element in an MxN matrix is 0, its entire row and column are set to 0.
+
+pub fn zero_matrix_1_8(matrix: &mut Vec<Vec<i32>>) {
+    let rows = matrix.len();
+    let cols = matrix[0].len();
+    let mut zero_rows = vec![false; rows];
+    let mut zero_cols = vec![false; cols];
+
+    // First pass: find all zeros
+    for i in 0..rows {
+        for j in 0..cols {
+            if matrix[i][j] == 0 {
+                zero_rows[i] = true;
+                zero_cols[j] = true;
+            }
+        }
+    }
+
+    // Second pass: set rows and columns to zero
+    for i in 0..rows {
+        for j in 0..cols {
+            if zero_rows[i] || zero_cols[j] {
+                matrix[i][j] = 0;
+            }
+        }
+    }
+}
+
+// Problem 1.9: String Rotation
+// Assume you have a method isSubstring which checks if one word is a substring of another. Given two strings, s1 and s2, write code to check if s2 is a rotation of s1 using only one call to isSubstring (i.e., "waterbottle" is a rotation of "erbottlewat").
+
+pub fn is_rotation_1_9(s1: String, s2: String) -> bool {
+    if s1.len() != s2.len() || s1.is_empty() {
+        return false;
+    }
+    let s1s1 = format!("{}{}", s1, s1);
+
+    s1s1.contains(&s2)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -376,5 +417,37 @@ mod tests {
             vec![9, 6, 3],
         ];
         assert_eq!(matrix, expected_result);
+    }
+
+    #[test]
+    fn test_zero_matrix_1_8() {
+        let mut matrix = vec![
+            vec![1, 2, 3],
+            vec![4, 0, 6],
+            vec![7, 8, 9],
+        ];
+        zero_matrix_1_8(&mut matrix);
+        let expected_result = vec![
+            vec![1, 0, 3],
+            vec![0, 0, 0],
+            vec![7, 0, 9],
+        ];
+        assert_eq!(matrix, expected_result);
+    }
+
+    #[test]
+    fn test_is_rotation_1_9() {
+        let test_string_a = String::from("waterbottle");
+        let test_string_b = String::from("erbottlewat");
+        let result = is_rotation_1_9(test_string_a, test_string_b);
+        assert_eq!(result, true);
+        let test_string_a = String::from("waterbottle");
+        let test_string_b = String::from("bottlewater");
+        let result = is_rotation_1_9(test_string_a, test_string_b);
+        assert_eq!(result, true);
+        let test_string_a = String::from("waterbottle");
+        let test_string_b = String::from("erbottlewas");
+        let result = is_rotation_1_9(test_string_a, test_string_b);
+        assert_eq!(result, false);
     }
 }
