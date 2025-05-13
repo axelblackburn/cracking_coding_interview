@@ -1,6 +1,7 @@
 
 use std::collections::HashMap;
 
+// O(n)
 pub fn is_unique_1_1_hashmap(string: String) -> bool {
     let mut map = HashMap::new();
     for c in string.chars() {
@@ -12,6 +13,7 @@ pub fn is_unique_1_1_hashmap(string: String) -> bool {
     true
 }
 
+// O(n)
 pub fn is_unique_1_1_bit_vector(string: String) -> bool {
     let mut bit_vector: usize = 0;
     for c in string.chars() {
@@ -28,6 +30,7 @@ pub fn is_unique_1_1_bit_vector(string: String) -> bool {
     true
 }
 
+// O(n log n)
 pub fn is_unique_1_1_no_external_data_structure(string: String) -> bool {
     let mut chars: Vec<_> = string.chars().collect();
     chars.sort_unstable();
