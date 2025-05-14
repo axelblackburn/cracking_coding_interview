@@ -364,6 +364,33 @@ pub fn remove_duplicate_2_1(list: &mut SinglyLinkedList<i32>) {
     }
 }
 
+
+// Problem 2.2: Return Kth to Last
+// Implement an algorithm to find the kth to last element of a singly linked list.
+
+pub fn kth_to_last_2_2(list: &mut SinglyLinkedList<i32>, k_to_last: usize) -> Result<i32, String> {
+    let mut current = &list.head;
+    let mut k_ahead = &list.head;
+
+    // Move k_ahead k elements ahead
+    for _i in 0..k_to_last {
+        match k_ahead {
+            Some(node) => k_ahead = &node.next,
+            None => return Err(format!("Less than {k_to_last} elements in the list!")),
+        }
+    }
+
+    // Move both pointers until the k_ahead hits the end
+    while let Some(node) = k_ahead {
+        k_ahead = &node.next;
+        current = &current.as_ref().unwrap().next;
+    }
+
+    current.as_ref()
+           .map(|node| node.value)
+           .ok_or_else(|| "List is empty".to_string())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -539,5 +566,18 @@ mod tests {
         remove_duplicate_2_1(&mut list);
 
         assert_eq!(list.to_vector(), vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_kth_to_last_2_2() {
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(3);
+        list.append(4);
+        list.append(5);
+
+        let result = kth_to_last_2_2(&mut list, 2);
+        assert_eq!(result, Ok(4));
     }
 }
