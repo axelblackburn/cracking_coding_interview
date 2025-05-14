@@ -1,5 +1,6 @@
 
 use std::collections::HashMap;
+use std::collections::HashSet;
 
 
 // Problem 1.1: Is Unique
@@ -289,6 +290,80 @@ pub fn is_rotation_1_9(s1: String, s2: String) -> bool {
     s1s1.contains(&s2)
 }
 
+// Linked List Implementation
+
+#[derive(Clone, Debug)]
+struct Node<T> {
+    value: T,
+    next: Option<Box<Node<T>>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct SinglyLinkedList<T> {
+    head: Option<Box<Node<T>>>,
+}
+
+impl<T> SinglyLinkedList<T> {
+    pub fn new() -> Self {
+        SinglyLinkedList { head: None }
+    }
+
+    pub fn append(&mut self, value: T) {
+        let new_node = Box::new(Node {
+            value,
+            next: None,
+        });
+
+        if let Some(ref mut head) = self.head {
+            let mut current = head;
+            while let Some(ref mut next) = current.next {
+                current = next;
+            }
+            current.next = Some(new_node);
+        } else {
+            self.head = Some(new_node);
+        }
+    }
+}
+
+impl<T: Clone> SinglyLinkedList<T> {
+    pub fn to_vector(&self) -> Vec<T> {
+        let mut result = Vec::new();
+        let mut current = &self.head;
+        while let Some(node) = current {
+            result.push(node.value.clone());
+            current = &node.next;
+        }
+        result
+    }
+}
+
+impl<T> Default for SinglyLinkedList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+// Problem 2.1: Remove Duplicates from unsorted linked list
+
+pub fn remove_duplicate_2_1(list: &mut SinglyLinkedList<i32>) {
+    let mut seen = HashSet::new();
+    let mut current = &mut list.head;
+
+    while current.is_some() {
+        match current {
+            Some(node) if seen.contains(&node.value) => {
+                *current = node.next.take();
+            }
+            Some(node) => {
+                seen.insert(node.value);
+                current = &mut node.next;
+            }
+            None => break,
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -449,5 +524,20 @@ mod tests {
         let test_string_b = String::from("erbottlewas");
         let result = is_rotation_1_9(test_string_a, test_string_b);
         assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_remove_duplicate_2_1() {
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(1);
+        list.append(2);
+        list.append(2);
+        list.append(3);
+        list.append(3);
+        // list.remove_duplicates();
+        remove_duplicate_2_1(&mut list);
+
+        assert_eq!(list.to_vector(), vec![1, 2, 3]);
     }
 }
