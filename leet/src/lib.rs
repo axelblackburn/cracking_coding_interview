@@ -293,7 +293,7 @@ pub fn is_rotation_1_9(s1: String, s2: String) -> bool {
 // Linked List Implementation
 
 #[derive(Clone, Debug)]
-struct Node<T> {
+pub struct Node<T> {
     value: T,
     next: Option<Box<Node<T>>>,
 }
@@ -389,6 +389,16 @@ pub fn kth_to_last_2_2(list: &mut SinglyLinkedList<i32>, k_to_last: usize) -> Re
     current.as_ref()
            .map(|node| node.value)
            .ok_or_else(|| "List is empty".to_string())
+}
+
+// Problem 2.3: Delete Middle Node
+// Implement an algorithm to delete a node in the middle (i.e., any node but the first and last node, not necessarily the exact middle) of a singly linked list, given only access to that node.
+
+pub fn delete_middle_node_2_3(node: &mut Node<i32>) {
+    if let Some(ref mut next_node) = node.next {
+        node.value = next_node.value;
+        node.next = next_node.next.take();
+    }
 }
 
 #[cfg(test)]
@@ -579,5 +589,22 @@ mod tests {
 
         let result = kth_to_last_2_2(&mut list, 2);
         assert_eq!(result, Ok(4));
+    }
+
+    #[test]
+    fn test_delete_middle_node_2_3() {
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(3);
+        list.append(4);
+        list.append(5);
+
+        let mut node_to_delete = list.head.as_mut().unwrap().next.as_mut().unwrap().next.as_mut().unwrap();
+        delete_middle_node_2_3(&mut node_to_delete);
+
+        assert_eq!(node_to_delete.value, 4);
+        assert_eq!(node_to_delete.next.as_mut().unwrap().value, 5);
+        assert_eq!(list.to_vector(), vec![1, 2, 4, 5]);
     }
 }
