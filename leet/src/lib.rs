@@ -482,6 +482,35 @@ pub fn sum_lists_1s_first_2_5(list_a: &SinglyLinkedList<u8>, list_b: &SinglyLink
     number_to_list(sum)
 }
 
+pub fn sum_lists_1s_last_2_5(list_a: &SinglyLinkedList<u8>, list_b: &SinglyLinkedList<u8>) -> SinglyLinkedList<u8> {
+    fn list_to_number(list: &SinglyLinkedList<u8>) -> u32 {
+        let mut n: u32 = 0;
+        let mut head = &list.head;
+        while let Some(node) = head {
+            head = &node.next;
+            n *= 10;
+            n += node.value as u32;
+        }
+        n
+    }
+    let sum = list_to_number(list_a) + list_to_number(list_b);
+
+    fn number_to_list(n: u32) -> SinglyLinkedList<u8> {
+        let mut list = SinglyLinkedList::new();
+        let mut first: Option<Box<Node<u8>>> = None;
+        let mut n = n;
+        while n > 0 {
+            let digit = (n - (n / 10 * 10)) as u8;
+            let new_node = Some(Box::new(Node {value: digit, next: first}));
+            first = new_node;
+            n /= 10;
+        }
+        list.head = first;
+        list
+    }
+    number_to_list(sum)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -718,5 +747,19 @@ mod tests {
         list_b.append(2);
         let result = sum_lists_1s_first_2_5(&list_a, &list_b);
         assert_eq!(result.to_vector(), vec![2, 1, 9]);
+    }
+
+    #[test]
+    fn test_sum_lists_1s_last_2_5() {
+        let mut list_a: SinglyLinkedList<u8> = SinglyLinkedList::new();
+        list_a.append(6);
+        list_a.append(1);
+        list_a.append(7);
+        let mut list_b: SinglyLinkedList<u8> = SinglyLinkedList::new();
+        list_b.append(2);
+        list_b.append(9);
+        list_b.append(5);
+        let result = sum_lists_1s_last_2_5(&list_a, &list_b);
+        assert_eq!(result.to_vector(), vec![9, 1, 2]);
     }
 }
