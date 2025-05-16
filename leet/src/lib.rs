@@ -444,6 +444,44 @@ pub fn partition_2_4(list: &mut SinglyLinkedList<i32>, x: i32) {
     }
 }
 
+// Problem 2.5: Sum Lists
+// You have two numbers represented by a linked list, where each node contains a single digit. The digits are stored in reverse order, such that the 1's digit is at the head of the list. Write a function that adds the two numbers and returns it as a linked list.
+
+pub fn sum_lists_1s_first_2_5(list_a: &SinglyLinkedList<u8>, list_b: &SinglyLinkedList<u8>) -> SinglyLinkedList<u8> {
+    fn list_to_number(list: &SinglyLinkedList<u8>) -> u32 {
+        let mut n: u32 = 0;
+        let mut multiplier: u32 = 1;
+        let mut head = &list.head;
+        while let Some(node) = head {
+            head = &node.next;
+            n += node.value as u32 * multiplier;
+            multiplier *= 10;
+        }
+        n
+    }
+    let sum = list_to_number(list_a) + list_to_number(list_b);
+
+    fn number_to_list(n: u32) -> SinglyLinkedList<u8> {
+        let mut list = SinglyLinkedList::new();
+        let mut last: Option<&mut Box<Node<u8>>> = None;
+        let mut n = n;
+        while n > 0 {
+            let digit = (n - (n / 10 * 10)) as u8;
+            let new_node = Some(Box::new(Node {value: digit, next: None}));
+            if let Some(last_node) = last {
+                last_node.next = new_node;
+                last = last_node.next.as_mut();
+            } else {
+                list.head = new_node;
+                last = list.head.as_mut();
+            }
+            n /= 10;
+        }
+        list
+    }
+    number_to_list(sum)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -665,5 +703,20 @@ mod tests {
         partition_2_4(&mut list, 5);
 
         assert_eq!(list.to_vector(), vec![3, 2, 1, 5, 8, 5, 10]);
+ 
+    }
+
+    #[test]
+    fn test_sum_lists_1s_first_2_5() {
+        let mut list_a: SinglyLinkedList<u8> = SinglyLinkedList::new();
+        list_a.append(7);
+        list_a.append(1);
+        list_a.append(6);
+        let mut list_b: SinglyLinkedList<u8> = SinglyLinkedList::new();
+        list_b.append(5);
+        list_b.append(9);
+        list_b.append(2);
+        let result = sum_lists_1s_first_2_5(&list_a, &list_b);
+        assert_eq!(result.to_vector(), vec![2, 1, 9]);
     }
 }
