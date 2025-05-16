@@ -401,6 +401,49 @@ pub fn delete_middle_node_2_3(node: &mut Node<i32>) {
     }
 }
 
+
+// Problem 2.4: Partition
+// Write code to partition a linked list around a value x, such that all nodes less than x come before all nodes greater than or equal to x. If x is contained within the list, the values of x only need to be after the elements less than x (see below). The partition element x can appear anywhere in the "right partition"; it does not need to appear between the left and right partitions.
+
+pub fn partition_2_4(list: &mut SinglyLinkedList<i32>, x: i32) {
+    let mut before_head: Option<Box<Node<i32>>> = None;
+    let mut before_tail: Option<&mut Box<Node<i32>>> = None;
+
+    let mut after_head: Option<Box<Node<i32>>> = None;
+    let mut after_tail: Option<&mut Box<Node<i32>>> = None;
+
+    let mut runner = list.head.take();
+
+    while let Some(mut node) = runner {
+        runner = node.next.take();
+
+        if node.value < x {
+            if let Some(tail) = before_tail {
+                tail.next = Some(node);
+                before_tail = tail.next.as_mut();
+            } else {
+                before_head = Some(node);
+                before_tail = before_head.as_mut();
+            }
+        } else {
+            if let Some(tail) = after_tail {
+                tail.next = Some(node);
+                after_tail = tail.next.as_mut();
+            } else {
+                after_head = Some(node);
+                after_tail = after_head.as_mut();
+            }
+        }
+    }
+
+    if let Some(tail) = before_tail {
+        tail.next = after_head;
+        list.head = before_head;
+    } else {
+        list.head = after_head;
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -606,5 +649,21 @@ mod tests {
         assert_eq!(node_to_delete.value, 4);
         assert_eq!(node_to_delete.next.as_mut().unwrap().value, 5);
         assert_eq!(list.to_vector(), vec![1, 2, 4, 5]);
+    }
+
+    #[test]
+    fn test_partition_2_4() {
+        let mut list = SinglyLinkedList::new();
+        list.append(3);
+        list.append(5);
+        list.append(8);
+        list.append(5);
+        list.append(10);
+        list.append(2);
+        list.append(1);
+
+        partition_2_4(&mut list, 5);
+
+        assert_eq!(list.to_vector(), vec![3, 2, 1, 5, 8, 5, 10]);
     }
 }
