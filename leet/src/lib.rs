@@ -511,6 +511,84 @@ pub fn sum_lists_1s_last_2_5(list_a: &SinglyLinkedList<u8>, list_b: &SinglyLinke
     number_to_list(sum)
 }
 
+// Problem 2.6: Palindrome
+// Implement a function to check if a linked list is a palindrome.
+
+// Odd
+// 1 2 3 4 5 6 7 8 9 N
+// SF                  C=0
+// _ S F               C=1
+// _ _ S _ F           C=2
+// _ _ _ S _ _ F       C=3
+// _ _ _ _ S _ _ _ F   C=4
+// _ _ _ _ M S _ _ _ F
+
+// Even
+// 1 2 3 4 5 6 7 8 N
+// SF                  C=0
+// _ S F               C=1
+// _ _ S _ F           C=2
+// _ _ _ S _ _ F       C=3
+// _ _ _ _ S _ _ _ F   C=4
+
+pub fn palindrome_2_6(list: SinglyLinkedList<i32>) -> bool {
+    // Using a runner and a runner twice as fast, we can find the middle
+    let mut slow_runner: &Option<Box<Node<i32>>> = &list.head;
+    let mut fast_runner: &Option<Box<Node<i32>>> = slow_runner;
+    let mut half_length: usize = 0;
+
+    // Using a second list built backwards, we can test equality of the 2 sides
+    let mut inverted_half: Option<Box<Node<i32>>> = None;
+
+    while let Some(find_end_node) = fast_runner {
+        // Advance the fast runner once
+        fast_runner = &find_end_node.next;
+
+        // Advance the fast runner twice
+        if let Some(find_end_node) = &find_end_node.next {
+            fast_runner = &find_end_node.next;
+            // We advanced fast twice, we can increase the half length
+            half_length += 1;
+            // Advance the slow runner once
+            if let Some(node) = slow_runner {
+                // Prepend the current slow in the inverted list
+                let new_node = Box::new(Node { value: node.value, next: inverted_half });
+                inverted_half = Some(new_node);
+                slow_runner = &node.next;
+            } else {
+                panic!("Something went really wrong");
+            }
+        } else {
+            // We have an odd number of elements, so we need to skip the middle
+            if let Some(node) = slow_runner {
+                slow_runner = &node.next;
+            } else {
+                panic!("Something went really wrong");
+            }
+        }
+    }
+
+    let mut option_node_a: &Option<Box<Node<i32>>> = &inverted_half;
+    let mut option_node_b: &Option<Box<Node<i32>>> = slow_runner;
+    for _i in 0..half_length {
+        if let Some(node_a) = option_node_a {
+            if let Some(node_b) = option_node_b {
+                if node_a.value != node_b.value {
+                    return false;
+                }
+                option_node_a = &node_a.next;
+                option_node_b = &node_b.next;
+            } else {
+                panic!("Something went wrong");
+            }
+        } else {
+            panic!("Something went wrong");
+        }
+    }
+
+    true
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -761,5 +839,34 @@ mod tests {
         list_b.append(5);
         let result = sum_lists_1s_last_2_5(&list_a, &list_b);
         assert_eq!(result.to_vector(), vec![9, 1, 2]);
+    }
+
+    #[test]
+    fn test_palindrome_2_6() {
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(3);
+        list.append(2);
+        list.append(1);
+        let result = palindrome_2_6(list);
+        assert_eq!(result, true);
+
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(2);
+        list.append(1);
+        let result = palindrome_2_6(list);
+        assert_eq!(result, true);
+
+        let mut list = SinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(3);
+        list.append(4);
+        list.append(5);
+        let result = palindrome_2_6(list);
+        assert_eq!(result, false);
     }
 }
