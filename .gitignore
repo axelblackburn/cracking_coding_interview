@@ -2,6 +2,10 @@
 **/target/
 **/Cargo.lock
 
+# C
+**/*.o
+test_runner
+
 # Distribution
 /dist/
 
