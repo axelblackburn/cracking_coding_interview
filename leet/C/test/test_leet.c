@@ -9,11 +9,11 @@ void tearDown(void) {
 
 // Lists that intersect:
 // A -> B -> C -> D
-// E -> F ---^
+// F --------^
 
 // Lists that don't intersect:
 // A -> B -> C -> D
-// E -> F -> G -> H
+// F -> G -> H
 void test_intersection_2_7(void) {
     Node D = { .value = 0, .next = NULL };
     Node C = { .value = 1, .next = &D };
@@ -21,8 +21,7 @@ void test_intersection_2_7(void) {
     Node A = { .value = 3, .next = &B };
     SinglyLinkedList list_a = { .head = &A };
     Node F = { .value = 4, .next = &C };
-    Node E = { .value = 5, .next = &F };
-    SinglyLinkedList list_b = { .head = &E };
+    SinglyLinkedList list_b = { .head = &F };
     TEST_ASSERT_EQUAL(intersection_2_7(&list_a, &list_b), &C);
 
     Node H = { .value = 6, .next = NULL };

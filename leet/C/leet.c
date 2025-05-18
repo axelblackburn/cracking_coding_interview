@@ -9,26 +9,34 @@
 
 // Lists that intersect:
 // A -> B -> C -> D
-// E -> F ---^
+// F --------^
 
 // Lists that don't intersect:
 // A -> B -> C -> D
-// E -> F -> G -> H
+// F -> G -> H
 
 Node *intersection_2_7(SinglyLinkedList *list_a, SinglyLinkedList *list_b) {
     size_t a_length = 0;
     size_t b_length = 0;
 
     Node *runner = list_a->head;
+    Node *a_tail = NULL;
+    Node *b_tail = NULL;
     while (runner) {
+        a_tail = runner;
         runner = runner->next;
         a_length++;
     }
 
     runner = list_b->head;
     while (runner) {
+        b_tail = runner;
         runner = runner->next;
         b_length++;
+    }
+
+    if (a_tail != b_tail) {
+        return NULL;
     }
 
     Node *longest_runner;
