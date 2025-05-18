@@ -66,3 +66,91 @@ Node *intersection_2_7(SinglyLinkedList *list_a, SinglyLinkedList *list_b) {
 
     return NULL;
 }
+
+// Problem 2.8: Loop Detection
+// Given a circular linked list, implement an algorithm that returns the node at the beginning of the loop.
+
+// 1 -> 2 -> 3 -> 4 -> 5 -> 6 -> 7 -> 8 -> 9
+
+// If 9 -> 1:
+// SF
+//      S    F
+//           S         F
+//                S              F
+//                     S                   F
+//      F                   S
+//                F              S
+//                          F         S
+//                                    F     S
+// SF
+
+// If 9 -> 2:
+// SF
+//      S    F
+//           S         F
+//                S              F
+//                     S                   F
+//           F              S
+//                     F         S
+//                               F    S
+//                                         SF
+
+// If 9 -> 3
+// SF
+//      S    F
+//           S         F
+//                S              F
+//                     S                   F
+//                F         S
+//                          F    S
+//                                    SF
+
+// If 9 -> 4
+// SF
+//      S    F
+//           S         F
+//                S              F
+//                     S                   F
+//                     F    S
+//                               SF
+
+
+// Collision occurs N steps before the start of the loop, where N is also the distance between the list and the start of the loop
+Node *detect_loop_2_8(SinglyLinkedList *list) {
+    Node *slow_runner = list->head;
+    Node *fast_runner = slow_runner;
+
+    if (slow_runner->next != NULL) {
+        slow_runner = slow_runner->next;
+        fast_runner = fast_runner->next;
+
+        if (fast_runner->next != NULL) {
+            fast_runner = fast_runner->next;
+        } else {
+            return NULL;
+        }
+    } else {
+        return NULL;
+    }
+
+    while (fast_runner != NULL && slow_runner != fast_runner) {
+        if (fast_runner->next != NULL) {
+            slow_runner = slow_runner->next;
+            fast_runner = fast_runner->next->next;
+        } else {
+            return NULL;
+        }
+    }
+
+    if (fast_runner == NULL) {
+        return NULL;
+    }
+
+    slow_runner = list->head;
+    while (slow_runner != fast_runner) {
+        slow_runner = slow_runner->next;
+        fast_runner = fast_runner->next;
+    }
+
+    return slow_runner;
+}

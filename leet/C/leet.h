@@ -8,3 +8,5 @@ typedef struct SinglyLinkedList {
 } SinglyLinkedList;
 
 Node *intersection_2_7(SinglyLinkedList *list_a, SinglyLinkedList *list_b);
+
+Node *detect_loop_2_8(SinglyLinkedList *list);

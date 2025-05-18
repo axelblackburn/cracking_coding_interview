@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -I./test
+CFLAGS = -g -I./test
 SRC = $(wildcard *.c)
 TEST_SRC = test/unity.c test/test_leet.c
 OBJ = $(SRC:.c=.o)
