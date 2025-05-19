@@ -690,7 +690,46 @@ pub fn intersection_2_7(list_a: &RcSinglyLinkedList<i32>, list_b: &RcSinglyLinke
 // Problem 2.8: Loop Detection
 // Given a circular linked list, implement an algorithm that returns the node at the beginning of the loop.
 
-// No can do in rust, we can't have two linked list pointing to the same element.
+pub fn loop_detection_2_8(
+    list: &RcSinglyLinkedList<i32>,
+) -> Option<Rc<RefCell<RcNode<i32>>>> {
+    let mut slow = list.head.clone();
+    let mut fast = list.head.clone();
+
+    // Phase 1: Detect the loop
+    loop {
+        slow = slow.and_then(|node| node.borrow().next.clone());
+        fast = fast
+            .and_then(|node| node.borrow().next.clone())
+            .and_then(|node| node.borrow().next.clone());
+
+        match (&slow, &fast) {
+            (Some(s), Some(f)) => {
+                if Rc::ptr_eq(s, f) {
+                    break;
+                }
+            }
+            _ => return None, // No loop
+        }
+    }
+
+    // Phase 2: Find the entry point of the loop
+    let mut start = list.head.clone();
+    while let (Some(s_node), Some(f_node)) = (&start, &slow) {
+        if Rc::ptr_eq(s_node, f_node) {
+            return Some(Rc::clone(s_node));
+        }
+
+        // Extract `next` values first to avoid simultaneous borrow and assignment
+        let s_next = s_node.borrow().next.clone();
+        let f_next = f_node.borrow().next.clone();
+        start = s_next;
+        slow = f_next;
+    }
+
+    None
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1001,5 +1040,19 @@ mod tests {
 
         let result = intersection_2_7(&list_a, &list_b);
         assert!(result.is_some() && Rc::ptr_eq(result.as_ref().unwrap(), &intersecting_node));
+    }
+
+    #[test]
+    fn test_loop_detection_2_8() {
+        let mut list = RcSinglyLinkedList::new();
+        list.append(1);
+        list.append(2);
+        list.append(3);
+        let loop_start = Rc::new(RefCell::new(RcNode { value: 4, next: None }));
+        list.head.as_ref().unwrap().borrow_mut().next = Some(loop_start.clone());
+        loop_start.borrow_mut().next = Some(Rc::new(RefCell::new(RcNode { value: 5, next: Some(loop_start.clone()) })));
+
+        let result = loop_detection_2_8(&list);
+        assert!(result.is_some() && Rc::ptr_eq(result.as_ref().unwrap(), &loop_start));
     }
 }
