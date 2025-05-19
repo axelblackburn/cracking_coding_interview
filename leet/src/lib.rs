@@ -1,6 +1,8 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 
 // Problem 1.1: Is Unique
@@ -243,7 +245,7 @@ pub fn rotate_matrix_1_7(matrix: &mut Vec<Vec<i32>>) {
             // top right -> bottom right
             matrix[last][last - offset] = matrix[i][last];
 
-            // top left -> top right 
+            // top left -> top right
             matrix[i][last] = top_left;
         }
     }
@@ -589,10 +591,101 @@ pub fn palindrome_2_6(list: SinglyLinkedList<i32>) -> bool {
     true
 }
 
+#[derive(Clone, Debug)]
+#[allow(dead_code)]
+pub struct RcNode<T> {
+    value: T,
+    next: Option<Rc<RefCell<RcNode<T>>>>,
+}
+
+#[derive(Clone, Debug)]
+pub struct RcSinglyLinkedList<T> {
+    head: Option<Rc<RefCell<RcNode<T>>>>,
+}
+
+impl<T> RcSinglyLinkedList<T> {
+    pub fn new() -> Self {
+        RcSinglyLinkedList { head: None }
+    }
+
+    pub fn append(&mut self, value: T) {
+        let new_node = Rc::new(RefCell::new(RcNode {
+            value,
+            next: None,
+        }));
+
+        match self.head.as_ref() {
+            None => {
+                self.head = Some(new_node);
+            }
+            Some(head) => {
+                let mut current = Rc::clone(head);
+                loop {
+                    let next = current.borrow().next.clone();
+                    match next {
+                        Some(next_node) => {
+                            current = next_node;
+                        }
+                        None => {
+                            current.borrow_mut().next = Some(new_node);
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
 // Problem 2.7: Intersection
 // Given two (singly) linked lists, determine if the two lists intersect. Return the intersecting node. Note that the intersection is defined based on reference, not value. That is, if the kth node of the first linked list is the exact same node (by reference) as the jth node of the second linked list, then they are intersecting.
 
-// No can do in rust, we can't have two linked list pointing to the same element.
+pub fn intersection_2_7(list_a: &RcSinglyLinkedList<i32>, list_b: &RcSinglyLinkedList<i32>) -> Option<Rc<RefCell<RcNode<i32>>>> {
+    fn get_length_and_tail(mut head: Option<Rc<RefCell<RcNode<i32>>>>) -> (usize, Option<Rc<RefCell<RcNode<i32>>>>) {
+        let mut length = 0;
+        let mut tail = None;
+        while let Some(node) = head {
+            length += 1;
+            tail = Some(node.clone());
+            head = node.borrow().next.clone();
+        }
+        (length, tail)
+    }
+
+    let (len_a, tail_a) = get_length_and_tail(list_a.head.clone());
+    let (len_b, tail_b) = get_length_and_tail(list_b.head.clone());
+
+    // If tails are not the same, there is no intersection
+    if !Rc::ptr_eq(tail_a.as_ref().unwrap(), tail_b.as_ref().unwrap()) {
+        return None;
+    }
+
+    let mut current_a = list_a.head.clone();
+    let mut current_b = list_b.head.clone();
+
+    // Align the starting points
+    if len_a > len_b {
+        for _ in 0..(len_a - len_b) {
+            current_a = current_a.unwrap().borrow().next.clone();
+        }
+    } else {
+        for _ in 0..(len_b - len_a) {
+            current_b = current_b.unwrap().borrow().next.clone();
+        }
+    }
+
+    // Compare nodes for intersection
+    while let (Some(node_a), Some(node_b)) = (current_a.clone(), current_b.clone()) {
+        if Rc::ptr_eq(&node_a, &node_b) {
+            return Some(node_a);
+        }
+        current_a = node_a.borrow().next.clone();
+        current_b = node_b.borrow().next.clone();
+    }
+
+    None
+}
+
 
 // Problem 2.8: Loop Detection
 // Given a circular linked list, implement an algorithm that returns the node at the beginning of the loop.
@@ -820,7 +913,7 @@ mod tests {
         partition_2_4(&mut list, 5);
 
         assert_eq!(list.to_vector(), vec![3, 2, 1, 5, 8, 5, 10]);
- 
+
     }
 
     #[test]
@@ -878,5 +971,35 @@ mod tests {
         list.append(5);
         let result = palindrome_2_6(list);
         assert_eq!(result, false);
+    }
+
+    #[test]
+    fn test_intersection_2_7() {
+        let mut list_a = RcSinglyLinkedList::new();
+        list_a.append(1);
+        list_a.append(2);
+        list_a.append(3);
+
+        let mut list_b = RcSinglyLinkedList::new();
+        list_b.append(4);
+        list_b.append(5);
+        list_b.append(6);
+
+        assert!(intersection_2_7(&list_a, &list_b).is_none());
+
+        // Create an intersection
+        let mut current_a = list_a.head.clone();
+        for _ in 0..2 {
+            current_a = current_a.unwrap().borrow().next.clone();
+        }
+        let intersecting_node = current_a.unwrap();
+        let mut current_b = list_b.head.clone();
+        for _ in 0..2 {
+            current_b = current_b.unwrap().borrow().next.clone();
+        }
+        current_b.unwrap().borrow_mut().next = Some(intersecting_node.clone());
+
+        let result = intersection_2_7(&list_a, &list_b);
+        assert!(result.is_some() && Rc::ptr_eq(result.as_ref().unwrap(), &intersecting_node));
     }
 }
