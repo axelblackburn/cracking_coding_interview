@@ -943,6 +943,38 @@ impl MyQueue {
     }
 }
 
+// Problem 3.5: Sort Stack
+// Write a program to sort a stack in ascending order. You should not make any assumptions about how the stack is implemented. The following are the only functions that should be used to write this program: push | pop | peek | isEmpty.
+
+pub fn sort_stack_3_5(stack: &mut Vec<i32>) {
+    // We want to sort our stack so that its smallest elements are at the top
+    // We use a secondary stack sorted the other way
+    let mut inverted_stack = Vec::new();
+    while !stack.is_empty() {
+        let value = stack.pop().unwrap();
+        if inverted_stack.is_empty() {
+            inverted_stack.push(value);
+        } else {
+            // Use our input stack as intermediary buffer
+            let mut intermediary_count = 0;
+            while !inverted_stack.is_empty() && *inverted_stack.last().unwrap() < value {
+                intermediary_count += 1;
+                stack.push(inverted_stack.pop().unwrap());
+            }
+            // Insert the value in its place
+            inverted_stack.push(value);
+            // Restack
+            for _ in 0..intermediary_count {
+                inverted_stack.push(stack.pop().unwrap());
+            }
+        }
+    }
+    // The inverted stack now contain the full stack sorted in reverse order
+    while !inverted_stack.is_empty() {
+        stack.push(inverted_stack.pop().unwrap());
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1680,5 +1712,28 @@ mod tests {
         let mut queue = MyQueue::new();
         queue.push(42);
         assert_eq!(queue.pop(), 42);
+    }
+
+    #[test]
+    fn test_sort_stack_3_5() {
+        let mut stack = vec![3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5];
+        sort_stack_3_5(&mut stack);
+        assert_eq!(stack, vec![1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]);
+
+        let mut stack = vec![10, 20, 30, 40, 50];
+        sort_stack_3_5(&mut stack);
+        assert_eq!(stack, vec![10, 20, 30, 40, 50]);
+
+        let mut stack = vec![50, 40, 30, 20, 10];
+        sort_stack_3_5(&mut stack);
+        assert_eq!(stack, vec![10, 20, 30, 40, 50]);
+
+        let mut stack = vec![1];
+        sort_stack_3_5(&mut stack);
+        assert_eq!(stack, vec![1]);
+
+        let mut stack: Vec<i32> = vec![];
+        sort_stack_3_5(&mut stack);
+        assert_eq!(stack, vec![]);
     }
 }
