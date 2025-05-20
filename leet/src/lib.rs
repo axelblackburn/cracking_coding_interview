@@ -730,6 +730,82 @@ pub fn loop_detection_2_8(
     None
 }
 
+// Problem 3.1 : Three in One
+// Describe how you could use a single array to implement three stacks.
+
+// Simple solution: 3 thirds
+
+#[derive(Debug)]
+pub struct StacksOnArray<T> {
+    how_many_stacks: usize,
+    stacks_size: usize,
+    array: Vec<T>,
+    stacks_counts: Vec<usize>,
+}
+
+impl<T: Copy + Default> StacksOnArray<T> {
+    pub fn new(stacks_size: usize) -> Self {
+        let mut stack = StacksOnArray {
+            how_many_stacks: 3,
+            stacks_size: stacks_size,
+            array: Vec::<T>::new(),
+            stacks_counts: Vec::new(),
+        };
+        stack.array.resize(stack.how_many_stacks * stack.stacks_size, T::default());
+        stack.stacks_counts.resize(stack.how_many_stacks, 0);
+
+        stack
+    }
+
+    pub fn is_full(&self, stack_id: usize) -> bool {
+        if stack_id >= self.how_many_stacks {
+            panic!("Invalid stack id {stack_id}");
+        }
+
+        self.stacks_counts[stack_id] >= self.stacks_size
+    }
+
+    pub fn is_empty(&self, stack_id: usize) -> bool {
+        if stack_id >= self.how_many_stacks {
+            panic!("Invalid stack id {stack_id}");
+        }
+
+        self.stacks_counts[stack_id] == 0
+    }
+
+    pub fn push(&mut self, stack_id: usize, value: T) {
+        if stack_id >= self.how_many_stacks {
+            panic!("Invalid stack id {stack_id}");
+        }
+
+        if self.is_full(stack_id) {
+            panic!("Stack {stack_id} is full");
+        }
+
+        self.array[stack_id * self.stacks_size + self.stacks_counts[stack_id]] = value;
+        self.stacks_counts[stack_id] += 1;
+    }
+
+    pub fn pop(&mut self, stack_id: usize) -> T {
+        let value = self.peek(stack_id);
+        self.stacks_counts[stack_id] -= 1;
+
+        value
+    }
+
+    pub fn peek(&self, stack_id: usize) -> T {
+        if stack_id >= self.how_many_stacks {
+            panic!("Invalid stack id {stack_id}");
+        }
+
+        if self.is_empty(stack_id) {
+            panic!("Stack {stack_id} is empty");
+        }
+
+        self.array[stack_id * self.stacks_size + self.stacks_counts[stack_id] - 1]
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1054,5 +1130,90 @@ mod tests {
 
         let result = loop_detection_2_8(&list);
         assert!(result.is_some() && Rc::ptr_eq(result.as_ref().unwrap(), &loop_start));
+    }
+
+    #[test]
+    fn test_stacks_on_array_push_and_pop() {
+        let mut stacks = StacksOnArray::new(3);
+        stacks.push(0, 10);
+        stacks.push(0, 20);
+        stacks.push(1, 30);
+        stacks.push(2, 40);
+
+        assert_eq!(stacks.pop(0), 20);
+        assert_eq!(stacks.pop(0), 10);
+        assert_eq!(stacks.pop(1), 30);
+        assert_eq!(stacks.pop(2), 40);
+    }
+
+    #[test]
+    fn test_stacks_on_array_peek() {
+        let mut stacks = StacksOnArray::new(3);
+        stacks.push(0, 10);
+        stacks.push(0, 20);
+        stacks.push(1, 30);
+
+        assert_eq!(stacks.peek(0), 20);
+        assert_eq!(stacks.peek(1), 30);
+    }
+
+    #[test]
+    fn test_stacks_on_array_is_empty() {
+        let mut stacks = StacksOnArray::new(3);
+        assert!(stacks.is_empty(0));
+        stacks.push(0, 10);
+        assert!(!stacks.is_empty(0));
+    }
+
+    #[test]
+    fn test_stacks_on_array_is_full() {
+        let mut stacks = StacksOnArray::new(2);
+        stacks.push(0, 10);
+        stacks.push(0, 20);
+        assert!(stacks.is_full(0));
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid stack id 3")]
+    fn test_stacks_on_array_invalid_stack_id_push() {
+        let mut stacks = StacksOnArray::new(3);
+        stacks.push(3, 10);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid stack id 3")]
+    fn test_stacks_on_array_invalid_stack_id_pop() {
+        let mut stacks: StacksOnArray<i32> = StacksOnArray::new(3);
+        stacks.pop(3);
+    }
+
+    #[test]
+    #[should_panic(expected = "Invalid stack id 3")]
+    fn test_stacks_on_array_invalid_stack_id_peek() {
+        let stacks: StacksOnArray<i32> = StacksOnArray::new(3);
+        stacks.peek(3);
+    }
+
+    #[test]
+    #[should_panic(expected = "Stack 0 is full")]
+    fn test_stacks_on_array_push_to_full_stack() {
+        let mut stacks = StacksOnArray::new(2);
+        stacks.push(0, 10);
+        stacks.push(0, 20);
+        stacks.push(0, 30);
+    }
+
+    #[test]
+    #[should_panic(expected = "Stack 0 is empty")]
+    fn test_stacks_on_array_pop_from_empty_stack() {
+        let mut stacks: StacksOnArray<i32> = StacksOnArray::new(3);
+        stacks.pop(0);
+    }
+
+    #[test]
+    #[should_panic(expected = "Stack 0 is empty")]
+    fn test_stacks_on_array_peek_empty_stack() {
+        let stacks: StacksOnArray<i32> = StacksOnArray::new(3);
+        stacks.peek(0);
     }
 }
