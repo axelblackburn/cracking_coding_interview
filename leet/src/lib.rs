@@ -865,22 +865,17 @@ impl StackOPlates {
     }
 
     pub fn push(&mut self, value: i32) {
-        match self.stacks.last_mut() {
-            None => {
-                let mut new_list = Vec::new();
-                new_list.push(value);
-                self.stacks.push(new_list);
-            },
-            Some(stack) => {
-                if stack.len() >= self.threshold {
-                    let mut new_list = Vec::new();
-                    new_list.push(value);
-                    self.stacks.push(new_list);
-                } else {
-                    stack.push(value);
-                }
+        for stack in self.stacks.iter_mut() {
+            // Since any stack may have had a plate removed, iterate from first to last
+            if stack.len() < self.threshold {
+                stack.push(value);
+                return;
             }
         }
+        // Empty stacks or all full
+        let mut new_list = Vec::new();
+        new_list.push(value);
+        self.stacks.push(new_list);
     }
 
     pub fn pop(&mut self) -> i32 {
@@ -897,6 +892,16 @@ impl StackOPlates {
                         value
                     }
                 }
+            }
+        }
+    }
+
+    pub fn pop_kth(&mut self, k: usize) -> i32 {
+        match self.stacks.get_mut(k) {
+            None => panic!("No {k}th stack"),
+            Some(stack) => match stack.pop() {
+                None => panic!("{k}th stack is empty"),
+                Some(value) => value
             }
         }
     }
@@ -1470,5 +1475,65 @@ mod tests {
 
         // Stack should now be empty
         assert!(stack.stacks.is_empty());
+    }
+
+    #[test]
+    fn test_stack_o_plates_pop_kth() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+        stack.push(4);
+        stack.push(5); // Another new stack
+
+        assert_eq!(stack.pop_kth(0), 2); // Pop from the first stack
+        assert_eq!(stack.pop_kth(1), 4); // Pop from the second stack
+        assert_eq!(stack.pop_kth(1), 3); // Pop the remaining element from the second stack
+        assert_eq!(stack.pop_kth(0), 1); // Pop the remaining element from the first stack
+        assert_eq!(stack.pop_kth(2), 5); // Pop from the last stack
+    }
+
+    #[test]
+    fn test_stack_o_plates_pop_kth_empty_middle_stack() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+        stack.push(4);
+        stack.push(5); // Another new stack
+
+        assert_eq!(stack.pop_kth(1), 4); // Pop from the second stack
+        assert_eq!(stack.pop_kth(1), 3); // Pop the remaining element from the second stack
+
+        // Push more elements to the now-empty middle stack
+        stack.push(6);
+        stack.push(7);
+
+        assert_eq!(stack.pop_kth(1), 7); // Pop from the middle stack
+        assert_eq!(stack.pop_kth(1), 6); // Pop the remaining element from the middle stack
+    }
+
+    #[test]
+    #[should_panic(expected = "No 3th stack")]
+    fn test_stack_o_plates_pop_kth_invalid_index() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+
+        stack.pop_kth(3); // Invalid index
+    }
+
+    #[test]
+    #[should_panic(expected = "1th stack is empty")]
+    fn test_stack_o_plates_pop_kth_empty_stack() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+
+        stack.pop_kth(1); // Pop from the second stack
+        stack.pop_kth(1); // Pop the remaining element from the second stack
+        stack.pop_kth(1); // Attempt to pop from an empty stack
     }
 }
