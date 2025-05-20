@@ -907,6 +907,42 @@ impl StackOPlates {
     }
 }
 
+// Problem 3.4: Queue via Stacks
+// Implement a MyQueue class which implements a queue using two stacks.
+
+pub struct MyQueue {
+    stack_push: Vec<i32>,
+    stack_pop: Vec<i32>,
+}
+
+impl MyQueue {
+    pub fn new() -> Self {
+        MyQueue { stack_push: Vec::new(), stack_pop: Vec::new() }
+    }
+
+    pub fn push(&mut self, value: i32) {
+        self.stack_push.push(value);
+    }
+
+    pub fn pop(&mut self) -> i32 {
+        match self.stack_pop.pop() {
+            None => {
+                // Revert the push stack into the pop stack
+                while !self.stack_push.is_empty() {
+                    self.stack_pop.push(self.stack_push.pop().unwrap());
+                }
+                match self.stack_pop.pop() {
+                    None => panic!("Queue is empty"),
+                    Some(value) => value
+                }
+            },
+            Some(value) => {
+                value
+            }
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1535,5 +1571,114 @@ mod tests {
         stack.pop_kth(1); // Pop from the second stack
         stack.pop_kth(1); // Pop the remaining element from the second stack
         stack.pop_kth(1); // Attempt to pop from an empty stack
+    }
+
+    #[test]
+    fn test_myqueue_push_and_pop() {
+        let mut queue = MyQueue::new();
+        queue.push(1);
+        queue.push(2);
+        queue.push(3);
+
+        assert_eq!(queue.pop(), 1);
+        assert_eq!(queue.pop(), 2);
+        assert_eq!(queue.pop(), 3);
+    }
+
+    #[test]
+    #[should_panic(expected = "Queue is empty")]
+    fn test_myqueue_pop_empty_queue() {
+        let mut queue = MyQueue::new();
+        queue.pop();
+    }
+
+    #[test]
+    fn test_myqueue_push_pop_interleaved() {
+        let mut queue = MyQueue::new();
+        queue.push(1);
+        assert_eq!(queue.pop(), 1);
+        queue.push(2);
+        queue.push(3);
+        assert_eq!(queue.pop(), 2);
+        queue.push(4);
+        assert_eq!(queue.pop(), 3);
+        assert_eq!(queue.pop(), 4);
+    }
+
+    #[test]
+    fn test_myqueue_multiple_push_and_pop() {
+        let mut queue = MyQueue::new();
+        for i in 1..=10 {
+            queue.push(i);
+        }
+        for i in 1..=10 {
+            assert_eq!(queue.pop(), i);
+        }
+    }
+
+    #[test]
+    fn test_myqueue_empty_after_pop() {
+        let mut queue = MyQueue::new();
+        queue.push(1);
+        queue.push(2);
+        queue.pop();
+        queue.pop();
+
+        // Queue should now be empty
+        assert!(queue.stack_push.is_empty());
+        assert!(queue.stack_pop.is_empty());
+    }
+
+    #[test]
+    fn test_myqueue_push_after_emptying() {
+        let mut queue = MyQueue::new();
+        queue.push(1);
+        queue.push(2);
+        queue.pop();
+        queue.pop();
+
+        queue.push(3);
+        queue.push(4);
+
+        assert_eq!(queue.pop(), 3);
+        assert_eq!(queue.pop(), 4);
+    }
+
+    #[test]
+    fn test_myqueue_large_number_of_elements_intertwined() {
+        let mut queue = MyQueue::new();
+        for i in 1..=500 {
+            queue.push(i);
+        }
+        for i in 1..=500 {
+            assert_eq!(queue.pop(), i);
+        }
+        for i in 1..=500 {
+            queue.push(i);
+        }
+        for i in 1..=500 {
+            assert_eq!(queue.pop(), i);
+        }
+    }
+
+    #[test]
+    fn test_myqueue_push_pop_with_duplicates() {
+        let mut queue = MyQueue::new();
+        queue.push(1);
+        queue.push(1);
+        queue.push(2);
+        queue.push(2);
+
+        assert_eq!(queue.pop(), 1);
+        assert_eq!(queue.pop(), 1);
+        assert_eq!(queue.pop(), 2);
+        assert_eq!(queue.pop(), 2);
+    }
+
+    #[test]
+    fn test_myqueue_push_pop_single_element() {
+        let mut queue = MyQueue::new();
+        queue.push(42);
+        assert_eq!(queue.pop(), 42);
     }
 }
