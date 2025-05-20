@@ -1,6 +1,7 @@
 
 use std::collections::HashMap;
 use std::collections::HashSet;
+use std::collections::LinkedList;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -806,6 +807,49 @@ impl<T: Copy + Default> StacksOnArray<T> {
     }
 }
 
+// Problem 3.2: Stack Min
+// How would you design a stack which, in addition to push and pop, has a function min which returns the minimum element? Push, pop and min should all operate in O(1) time.
+
+#[derive(Debug)]
+struct StackWMinNode {
+    value: i32,
+    min_below: i32,
+}
+
+#[derive(Debug)]
+pub struct StackWMin {
+    list: LinkedList<StackWMinNode>,
+}
+
+impl StackWMin {
+    pub fn new() -> Self {
+        StackWMin { list: LinkedList::new() }
+    }
+
+    pub fn push(&mut self, value: i32) {
+        let previous_min = if self.list.is_empty() {
+            value
+        } else {
+            self.list.front().unwrap().min_below
+        };
+        self.list.push_front(StackWMinNode { value: value, min_below: previous_min.min(value) });
+    }
+
+    pub fn pop(&mut self) -> i32 {
+        match self.list.pop_front() {
+            None => panic!("Cannot pop from empty list"),
+            Some(node) => node.value
+        }
+    }
+
+    pub fn min(&mut self) -> i32 {
+        match self.list.front() {
+            None => panic!("No min in empty list"),
+            Some(node) => node.min_below
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1215,5 +1259,96 @@ mod tests {
     fn test_stacks_on_array_peek_empty_stack() {
         let stacks: StacksOnArray<i32> = StacksOnArray::new(3);
         stacks.peek(0);
+    }
+
+    #[test]
+    fn test_stack_w_min_push_and_pop() {
+        let mut stack = StackWMin::new();
+        stack.push(5);
+        stack.push(3);
+        stack.push(7);
+
+        assert_eq!(stack.pop(), 7);
+        assert_eq!(stack.pop(), 3);
+        assert_eq!(stack.pop(), 5);
+    }
+
+    #[test]
+    fn test_stack_w_min_min() {
+        let mut stack = StackWMin::new();
+        stack.push(5);
+        assert_eq!(stack.min(), 5);
+        stack.push(3);
+        assert_eq!(stack.min(), 3);
+        stack.push(7);
+        assert_eq!(stack.min(), 3);
+        stack.pop();
+        assert_eq!(stack.min(), 3);
+        stack.pop();
+        assert_eq!(stack.min(), 5);
+    }
+
+    #[test]
+    #[should_panic(expected = "Cannot pop from empty list")]
+    fn test_stack_w_min_pop_empty_stack() {
+        let mut stack = StackWMin::new();
+        stack.pop();
+    }
+
+    #[test]
+    #[should_panic(expected = "No min in empty list")]
+    fn test_stack_w_min_min_empty_stack() {
+        let mut stack = StackWMin::new();
+        stack.min();
+    }
+
+    #[test]
+    fn test_stack_w_min_push_same_min() {
+        let mut stack = StackWMin::new();
+        stack.push(5);
+        stack.push(5);
+        stack.push(5);
+
+        assert_eq!(stack.min(), 5);
+        stack.pop();
+        assert_eq!(stack.min(), 5);
+        stack.pop();
+        assert_eq!(stack.min(), 5);
+    }
+
+    #[test]
+    fn test_stack_w_min_push_decreasing_order() {
+        let mut stack = StackWMin::new();
+        stack.push(5);
+        stack.push(4);
+        stack.push(3);
+        stack.push(2);
+        stack.push(1);
+
+        assert_eq!(stack.min(), 1);
+        stack.pop();
+        assert_eq!(stack.min(), 2);
+        stack.pop();
+        assert_eq!(stack.min(), 3);
+        stack.pop();
+        assert_eq!(stack.min(), 4);
+        stack.pop();
+        assert_eq!(stack.min(), 5);
+    }
+
+    #[test]
+    fn test_stack_w_min_push_increasing_order() {
+        let mut stack = StackWMin::new();
+        stack.push(1);
+        stack.push(2);
+        stack.push(3);
+        stack.push(4);
+        stack.push(5);
+
+        assert_eq!(stack.min(), 1);
+        stack.pop();
+        assert_eq!(stack.min(), 1);
+        stack.pop();
+        assert_eq!(stack.min(), 1);
     }
 }
