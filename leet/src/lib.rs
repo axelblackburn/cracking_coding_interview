@@ -850,6 +850,58 @@ impl StackWMin {
     }
 }
 
+// Problem 3.3: Stack of Plates
+// Imagine a (literal) stack of plates. If the stack gets too high, it might topple. Therefore, in real life, we would likely start a new stack when the previous stack exceeds some threshold. Implement a data structure SetOfStacks that mimics this. SetOfStacks should be composed of several stacks and should create a new stack once the previous one exceeds capacity. SetOfStacks.push() and SetOfStacks.pop() should behave identically to a single stack (that is, pop() should return the same values as it would if there were just a single stack).
+
+#[derive(Debug)]
+pub struct StackOPlates {
+    stacks: Vec<Vec<i32>>,
+    threshold: usize,
+}
+
+impl StackOPlates {
+    pub fn new(threshold: usize) -> Self {
+        StackOPlates { stacks: Vec::new(), threshold: threshold }
+    }
+
+    pub fn push(&mut self, value: i32) {
+        match self.stacks.last_mut() {
+            None => {
+                let mut new_list = Vec::new();
+                new_list.push(value);
+                self.stacks.push(new_list);
+            },
+            Some(stack) => {
+                if stack.len() >= self.threshold {
+                    let mut new_list = Vec::new();
+                    new_list.push(value);
+                    self.stacks.push(new_list);
+                } else {
+                    stack.push(value);
+                }
+            }
+        }
+    }
+
+    pub fn pop(&mut self) -> i32 {
+        match self.stacks.last_mut() {
+            None => panic!("Can't pop from empty stack"),
+            Some(stack) => {
+                match stack.pop() {
+                    None => panic!("Front stack is empty!"),
+                    Some(value) => {
+                        if stack.is_empty() {
+                            // Delete front stack
+                            self.stacks.pop();
+                        }
+                        value
+                    }
+                }
+            }
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -1350,5 +1402,73 @@ mod tests {
         assert_eq!(stack.min(), 1);
         stack.pop();
         assert_eq!(stack.min(), 1);
+    }
+
+    #[test]
+    fn test_stack_o_plates_push_and_pop() {
+        let mut stack = StackOPlates::new(3);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3);
+        stack.push(4); // Should create a new stack
+        stack.push(5);
+
+        assert_eq!(stack.pop(), 5);
+        assert_eq!(stack.pop(), 4);
+        assert_eq!(stack.pop(), 3);
+        assert_eq!(stack.pop(), 2);
+        assert_eq!(stack.pop(), 1);
+    }
+
+    #[test]
+    #[should_panic(expected = "Can't pop from empty stack")]
+    fn test_stack_o_plates_pop_empty_stack() {
+        let mut stack = StackOPlates::new(3);
+        stack.pop();
+    }
+
+    #[test]
+    fn test_stack_o_plates_multiple_stacks() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+        stack.push(4);
+        stack.push(5); // Another new stack
+
+        assert_eq!(stack.pop(), 5);
+        assert_eq!(stack.pop(), 4);
+        assert_eq!(stack.pop(), 3);
+        assert_eq!(stack.pop(), 2);
+        assert_eq!(stack.pop(), 1);
+    }
+
+    #[test]
+    fn test_stack_o_plates_push_pop_interleaved() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+        assert_eq!(stack.pop(), 3);
+        stack.push(4);
+        stack.push(5); // New stack
+        assert_eq!(stack.pop(), 5);
+        assert_eq!(stack.pop(), 4);
+        assert_eq!(stack.pop(), 2);
+        assert_eq!(stack.pop(), 1);
+    }
+
+    #[test]
+    fn test_stack_o_plates_empty_after_pop() {
+        let mut stack = StackOPlates::new(2);
+        stack.push(1);
+        stack.push(2);
+        stack.push(3); // New stack
+        assert_eq!(stack.pop(), 3);
+        assert_eq!(stack.pop(), 2);
+        assert_eq!(stack.pop(), 1);
+
+        // Stack should now be empty
+        assert!(stack.stacks.is_empty());
     }
 }
