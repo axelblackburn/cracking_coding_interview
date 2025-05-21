@@ -1093,7 +1093,7 @@ impl Graph {
 // Problem 4.2: Minimal Tree
 // Given a sorted (increasing order) array with unique integer elements, write an algorithm to create a binary search tree with minimal height.
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct TreeNode<T> {
     pub value: T,
     pub left: Option<Box<TreeNode<T>>>,
@@ -1121,6 +1121,28 @@ pub fn minimal_tree_4_2(arr: &[i32]) -> Option<Box<TreeNode<i32>>> {
     let right = minimal_tree_4_2(&arr[mid + 1..]);
 
     Some(Box::new(TreeNode { value: node.value, left, right }))
+}
+
+
+// Problem 4.3: List of Depths
+// Given a binary tree, implement a method to create a linked list of all the nodes at each depth (e.g., if you have a tree with depth D, you'll have D linked lists).
+
+pub fn list_of_depths_dfs_4_3_helper(node: &Option<Box<TreeNode<i32>>>, depth: usize, depths: &mut Vec<Vec<i32>>) {
+    if let Some(node) = node {
+        if depth == depths.len() {
+            depths.push(Vec::new());
+        }
+
+        depths[depth].push(node.value);
+        list_of_depths_dfs_4_3_helper(&node.left, depth + 1, depths);
+        list_of_depths_dfs_4_3_helper(&node.right, depth + 1, depths);
+    }
+}
+
+pub fn list_of_depths_dfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<Vec<i32>> {
+    let mut depths = Vec::new();
+    list_of_depths_dfs_4_3_helper(&Some(Box::new(binary_tree.clone())), 0, &mut depths);
+    depths
 }
 
 #[cfg(test)]
@@ -2183,5 +2205,34 @@ mod tests {
         assert_eq!(left_right.value, 3);
         assert_eq!(right_left.value, 5);
         assert_eq!(right_right.value, 7);
+    }
+
+    #[test]
+    fn test_list_of_depths_dfs_4_3() {
+        // Test with a single-node tree
+        let single_node_tree = TreeNode::new(10);
+        let result = list_of_depths_dfs_4_3(&single_node_tree);
+        assert_eq!(result, vec![vec![10]]);
+
+        // Test with a balanced tree
+        let mut root = TreeNode::new(1);
+        root.left = Some(Box::new(TreeNode::new(2)));
+        root.right = Some(Box::new(TreeNode::new(3)));
+        root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+        root.left.as_mut().unwrap().right = Some(Box::new(TreeNode::new(5)));
+        root.right.as_mut().unwrap().left = Some(Box::new(TreeNode::new(6)));
+        root.right.as_mut().unwrap().right = Some(Box::new(TreeNode::new(7)));
+
+        let result = list_of_depths_dfs_4_3(&root);
+        assert_eq!(result, vec![vec![1], vec![2, 3], vec![4, 5, 6, 7]]);
+
+        // Test with an unbalanced tree
+        let mut unbalanced_root = TreeNode::new(1);
+        unbalanced_root.left = Some(Box::new(TreeNode::new(2)));
+        unbalanced_root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(3)));
+        unbalanced_root.left.as_mut().unwrap().left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+
+        let result = list_of_depths_dfs_4_3(&unbalanced_root);
+        assert_eq!(result, vec![vec![1], vec![2], vec![3], vec![4]]);
     }
 }
