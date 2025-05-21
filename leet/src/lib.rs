@@ -966,6 +966,71 @@ pub fn sort_stack_3_5(stack: &mut Vec<i32>) {
     }
 }
 
+// Problem 3.6: Animal Shelter
+// An animal shelter, which holds only dogs and cats, operates on a strictly "first in, first out" basis. People must adopt either the "oldest" (based on arrival time) of all animals at the shelter, or they can select whether they would prefer a dog or a cat (and will receive the oldest animal of that type). They cannot select which specific animal they would like. Create the data structures to maintain this system and
+// implement operations such as enqueue, dequeueAny, dequeueDog, and dequeueCat. You may use the built-in LinkedList class.
+
+#[derive(Debug, PartialEq)]
+pub enum Animal {
+    Cat,
+    Dog,
+}
+
+#[derive(Debug)]
+pub struct AnimalEntry {
+    index: usize,
+}
+
+#[derive(Debug)]
+pub struct AnimalShelter36 {
+    cat_stack: Vec<AnimalEntry>,
+    dog_stack: Vec<AnimalEntry>,
+    next_index: usize,
+}
+
+impl AnimalShelter36 {
+    pub fn new() -> Self {
+        AnimalShelter36 { cat_stack: Vec::new(), dog_stack: Vec::new(), next_index: 0 }
+    }
+
+    pub fn enqueue(&mut self, animal: Animal) {
+        let animal_entry = AnimalEntry { index: self.next_index };
+        self.next_index += 1;
+        match animal {
+            Animal::Cat => self.cat_stack.push(animal_entry),
+            Animal::Dog => self.dog_stack.push(animal_entry),
+        }
+    }
+
+    pub fn dequeue_any(&mut self) -> Option<Animal> {
+        match (self.cat_stack.last(), self.dog_stack.last()) {
+            (Some(cat), Some(dog)) => {
+                if cat.index < dog.index {
+                    self.dequeue_dog()
+                } else {
+                    self.dequeue_cat()
+                }
+            },
+            (Some(_), None) => self.dequeue_cat(),
+            (None, Some(_)) => self.dequeue_dog(),
+            (None, None) => None,
+        }
+    }
+
+    pub fn dequeue_cat(&mut self) -> Option<Animal> {
+        match self.cat_stack.pop() {
+            None => None,
+            Some(_) => Some(Animal::Cat),
+        }
+    }
+
+    pub fn dequeue_dog(&mut self) -> Option<Animal> {
+        match self.dog_stack.pop() {
+            None => return None,
+            Some(_) => return Some(Animal::Dog),
+        }
+    }
+}
 
 #[cfg(test)]
 mod tests {
@@ -1726,5 +1791,102 @@ mod tests {
         let mut stack: Vec<i32> = vec![];
         sort_stack_3_5(&mut stack);
         assert_eq!(stack, vec![]);
+    }
+
+    #[test]
+    fn test_animal_shelter_enqueue_and_dequeue_any() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_dequeue_cat() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+
+        assert_eq!(shelter.dequeue_cat(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_cat(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_cat(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_dequeue_dog() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+
+        assert_eq!(shelter.dequeue_dog(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_dog(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_dog(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_mixed_operations() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_dog(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_cat(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_empty_dequeues() {
+        let mut shelter = AnimalShelter36::new();
+
+        assert_eq!(shelter.dequeue_any(), None);
+        assert_eq!(shelter.dequeue_cat(), None);
+        assert_eq!(shelter.dequeue_dog(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_enqueue_only_cats() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Cat);
+
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_enqueue_only_dogs() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Dog);
+
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_any(), None);
+    }
+
+    #[test]
+    fn test_animal_shelter_enqueue_and_dequeue_order() {
+        let mut shelter = AnimalShelter36::new();
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+        shelter.enqueue(Animal::Dog);
+        shelter.enqueue(Animal::Cat);
+
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
+        assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
     }
 }
