@@ -2,6 +2,7 @@
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::LinkedList;
+use std::collections::VecDeque;
 use std::rc::Rc;
 use std::cell::RefCell;
 
@@ -1063,6 +1064,30 @@ impl Graph {
             .flatten()
             .any(|&neighbor| self.dfs(neighbor, to, visited))
     }
+
+    pub fn has_route_bfs(&self, from: i32, to: i32) -> bool {
+        let mut visited: HashSet<i32> = HashSet::new();
+        let mut to_visit: VecDeque<i32> = VecDeque::new();
+
+        visited.insert(from);
+        to_visit.push_back(from);
+
+        while let Some(current) = to_visit.pop_front() {
+            if current == to {
+                return true;
+            }
+
+            if let Some(neighbors) = self.adjacency_list.get(&current) {
+                for &neighbor in neighbors {
+                    if visited.insert(neighbor) {
+                        to_visit.push_back(neighbor);
+                    }
+                }
+            }
+        }
+
+        false
+    }
 }
 
 #[cfg(test)]
@@ -1993,5 +2018,77 @@ mod tests {
 
         // Test no route between disconnected nodes
         assert_eq!(graph.has_route_dfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_graph_has_route_bfs() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 3);
+        graph.add_edge(3, 4);
+
+        // Test direct route
+        assert_eq!(graph.has_route_bfs(1, 2), true);
+
+        // Test indirect route
+        assert_eq!(graph.has_route_bfs(1, 4), true);
+
+        // Test no route
+        assert_eq!(graph.has_route_bfs(4, 1), false);
+
+        // Test route to itself
+        assert_eq!(graph.has_route_bfs(1, 1), true);
+
+        // Test disconnected nodes
+        graph.add_edge(5, 6);
+        assert_eq!(graph.has_route_bfs(1, 5), false);
+        assert_eq!(graph.has_route_bfs(5, 6), true);
+
+        // Test cyclic graph
+        graph.add_edge(4, 1);
+        assert_eq!(graph.has_route_bfs(1, 3), true);
+        assert_eq!(graph.has_route_bfs(3, 1), true);
+    }
+
+    #[test]
+    fn test_graph_empty_bfs() {
+        let graph = Graph::new();
+
+        // Test no route in an empty graph
+        assert_eq!(graph.has_route_bfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_graph_single_node_bfs() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 1);
+
+        // Test route to itself in a single-node graph
+        assert_eq!(graph.has_route_bfs(1, 1), true);
+
+        // Test no route to another node
+        assert_eq!(graph.has_route_bfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_graph_multiple_paths_bfs() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(1, 3);
+        graph.add_edge(2, 4);
+        graph.add_edge(3, 4);
+
+        // Test multiple paths to the same node
+        assert_eq!(graph.has_route_bfs(1, 4), true);
+    }
+
+    #[test]
+    fn test_graph_no_edges_bfs() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 1);
+        graph.add_edge(2, 2);
+
+        // Test no route between disconnected nodes
+        assert_eq!(graph.has_route_bfs(1, 2), false);
     }
 }
