@@ -1090,6 +1090,39 @@ impl Graph {
     }
 }
 
+// Problem 4.2: Minimal Tree
+// Given a sorted (increasing order) array with unique integer elements, write an algorithm to create a binary search tree with minimal height.
+
+#[derive(Debug)]
+pub struct TreeNode<T> {
+    pub value: T,
+    pub left: Option<Box<TreeNode<T>>>,
+    pub right: Option<Box<TreeNode<T>>>,
+}
+
+impl<T> TreeNode<T> {
+    pub fn new(value: T) -> Self {
+        TreeNode {
+            value,
+            left: None,
+            right: None,
+        }
+    }
+}
+
+pub fn minimal_tree_4_2(arr: &[i32]) -> Option<Box<TreeNode<i32>>> {
+    if arr.is_empty() {
+        return None;
+    }
+
+    let mid = arr.len() / 2;
+    let node = TreeNode::new(arr[mid]);
+    let left = minimal_tree_4_2(&arr[..mid]);
+    let right = minimal_tree_4_2(&arr[mid + 1..]);
+
+    Some(Box::new(TreeNode { value: node.value, left, right }))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -2090,5 +2123,65 @@ mod tests {
 
         // Test no route between disconnected nodes
         assert_eq!(graph.has_route_bfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_minimal_tree_4_2() {
+        // Test with an empty array
+        let arr: Vec<i32> = vec![];
+        let result = minimal_tree_4_2(&arr);
+        assert!(result.is_none());
+
+        // Test with a single element
+        let arr = vec![10];
+        let result = minimal_tree_4_2(&arr);
+        assert!(result.is_some());
+        let root = result.unwrap();
+        assert_eq!(root.value, 10);
+        assert!(root.left.is_none());
+        assert!(root.right.is_none());
+
+        // Test with two elements
+        let arr = vec![10, 20];
+        let result = minimal_tree_4_2(&arr);
+        assert!(result.is_some());
+        let root = result.unwrap();
+        assert_eq!(root.value, 20);
+        assert!(root.right.is_none());
+        assert!(root.left.is_some());
+        assert_eq!(root.left.unwrap().value, 10);
+
+        // Test with three elements
+        let arr = vec![10, 20, 30];
+        let result = minimal_tree_4_2(&arr);
+        assert!(result.is_some());
+        let root = result.unwrap();
+        assert_eq!(root.value, 20);
+        assert!(root.left.is_some());
+        assert!(root.right.is_some());
+        assert_eq!(root.left.unwrap().value, 10);
+        assert_eq!(root.right.unwrap().value, 30);
+
+        // Test with multiple elements
+        let arr = vec![1, 2, 3, 4, 5, 6, 7];
+        let result = minimal_tree_4_2(&arr);
+        assert!(result.is_some());
+        let root = result.unwrap();
+        assert_eq!(root.value, 4);
+
+        let left = root.left.unwrap();
+        let right = root.right.unwrap();
+        assert_eq!(left.value, 2);
+        assert_eq!(right.value, 6);
+
+        let left_left = left.left.unwrap();
+        let left_right = left.right.unwrap();
+        let right_left = right.left.unwrap();
+        let right_right = right.right.unwrap();
+
+        assert_eq!(left_left.value, 1);
+        assert_eq!(left_right.value, 3);
+        assert_eq!(right_left.value, 5);
+        assert_eq!(right_right.value, 7);
     }
 }
