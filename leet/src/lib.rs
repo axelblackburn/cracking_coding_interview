@@ -950,28 +950,19 @@ pub fn sort_stack_3_5(stack: &mut Vec<i32>) {
     // We want to sort our stack so that its smallest elements are at the top
     // We use a secondary stack sorted the other way
     let mut inverted_stack = Vec::new();
-    while !stack.is_empty() {
-        let value = stack.pop().unwrap();
-        if inverted_stack.is_empty() {
-            inverted_stack.push(value);
-        } else {
-            // Use our input stack as intermediary buffer
-            let mut intermediary_count = 0;
-            while !inverted_stack.is_empty() && *inverted_stack.last().unwrap() < value {
-                intermediary_count += 1;
+    while let Some(value) = stack.pop() {
+        while let Some(&top) = inverted_stack.last() {
+            if top < value {
                 stack.push(inverted_stack.pop().unwrap());
-            }
-            // Insert the value in its place
-            inverted_stack.push(value);
-            // Restack
-            for _ in 0..intermediary_count {
-                inverted_stack.push(stack.pop().unwrap());
+            } else {
+                break;
             }
         }
+        inverted_stack.push(value);
     }
     // The inverted stack now contain the full stack sorted in reverse order
-    while !inverted_stack.is_empty() {
-        stack.push(inverted_stack.pop().unwrap());
+    while let Some(value) = inverted_stack.pop() {
+        stack.push(value);
     }
 }
 
