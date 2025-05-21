@@ -1026,6 +1026,45 @@ impl AnimalShelter36 {
     }
 }
 
+// Problem 4.1: Route Between Nodes
+// Given a directed graph, design an algorithm to find out whether there is a route between two nodes.
+
+#[derive(Default)]
+pub struct Graph {
+    adjacency_list: HashMap<i32, Vec<i32>>,
+}
+
+impl Graph {
+    pub fn new() -> Self {
+        Graph::default()
+    }
+
+    pub fn add_edge(&mut self, from: i32, to: i32) {
+        self.adjacency_list.entry(from).or_default().push(to);
+    }
+
+    pub fn has_route_dfs(&self, from: i32, to: i32) -> bool {
+        let mut visited: HashSet<i32> = HashSet::new();
+        self.dfs(from, to, &mut visited)
+    }
+
+    pub fn dfs(&self, from: i32, to: i32, visited: &mut HashSet<i32>) -> bool {
+        if from == to {
+            return true;
+        }
+
+        if !visited.insert(from) {
+            return false;
+        }
+
+        self.adjacency_list
+            .get(&from)
+            .into_iter()
+            .flatten()
+            .any(|&neighbor| self.dfs(neighbor, to, visited))
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -1882,5 +1921,77 @@ mod tests {
         assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
         assert_eq!(shelter.dequeue_any(), Some(Animal::Cat));
         assert_eq!(shelter.dequeue_any(), Some(Animal::Dog));
+    }
+
+    #[test]
+    fn test_graph_has_route() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(2, 3);
+        graph.add_edge(3, 4);
+
+        // Test direct route
+        assert_eq!(graph.has_route_dfs(1, 2), true);
+
+        // Test indirect route
+        assert_eq!(graph.has_route_dfs(1, 4), true);
+
+        // Test no route
+        assert_eq!(graph.has_route_dfs(4, 1), false);
+
+        // Test route to itself
+        assert_eq!(graph.has_route_dfs(1, 1), true);
+
+        // Test disconnected nodes
+        graph.add_edge(5, 6);
+        assert_eq!(graph.has_route_dfs(1, 5), false);
+        assert_eq!(graph.has_route_dfs(5, 6), true);
+
+        // Test cyclic graph
+        graph.add_edge(4, 1);
+        assert_eq!(graph.has_route_dfs(1, 3), true);
+        assert_eq!(graph.has_route_dfs(3, 1), true);
+    }
+
+    #[test]
+    fn test_graph_empty() {
+        let graph = Graph::new();
+
+        // Test no route in an empty graph
+        assert_eq!(graph.has_route_dfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_graph_single_node() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 1);
+
+        // Test route to itself in a single-node graph
+        assert_eq!(graph.has_route_dfs(1, 1), true);
+
+        // Test no route to another node
+        assert_eq!(graph.has_route_dfs(1, 2), false);
+    }
+
+    #[test]
+    fn test_graph_multiple_paths() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 2);
+        graph.add_edge(1, 3);
+        graph.add_edge(2, 4);
+        graph.add_edge(3, 4);
+
+        // Test multiple paths to the same node
+        assert_eq!(graph.has_route_dfs(1, 4), true);
+    }
+
+    #[test]
+    fn test_graph_no_edges() {
+        let mut graph = Graph::new();
+        graph.add_edge(1, 1);
+        graph.add_edge(2, 2);
+
+        // Test no route between disconnected nodes
+        assert_eq!(graph.has_route_dfs(1, 2), false);
     }
 }
