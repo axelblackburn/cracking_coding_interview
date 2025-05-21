@@ -1018,17 +1018,11 @@ impl AnimalShelter36 {
     }
 
     pub fn dequeue_cat(&mut self) -> Option<Animal> {
-        match self.cat_stack.pop() {
-            None => None,
-            Some(_) => Some(Animal::Cat),
-        }
+        self.cat_stack.pop().map(|_| Animal::Cat)
     }
 
     pub fn dequeue_dog(&mut self) -> Option<Animal> {
-        match self.dog_stack.pop() {
-            None => return None,
-            Some(_) => return Some(Animal::Dog),
-        }
+        self.dog_stack.pop().map(|_| Animal::Dog)
     }
 }
 
