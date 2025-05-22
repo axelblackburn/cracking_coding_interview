@@ -1145,6 +1145,49 @@ pub fn list_of_depths_dfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<Vec<i32>> {
     depths
 }
 
+// TODO BFS
+
+// Problem 4.4: Check Balanced
+// Implement a function to check if a binary tree is balanced. For the purposes of this question, a balanced tree is defined to be a tree such that no two leaf nodes differ in distance from the root by more than one.
+
+// Problem 4.5: Validate BST
+// Implement a function to check if a binary tree is a binary search tree.
+
+// Problem 4.6: Successor
+// Write an algorithm to find the "next" node (i.e., in-order successor) of a given node in a binary search tree. You may assume that each node has a link to its parent.
+
+// Problem 4.7: Build Order
+// You are given a list of projects and a list of dependencies (which is a list of pairs of projects, where the second project is dependent on the first project). All of a project's dependencies must be built before the project is. Find a build order that will allow the projects to be built. If there is no valid build order, return an error.
+// Example:
+// Input:
+//    projects: a, b, c, d, e, f
+//    dependencies: (a, d), (f, b), (b, d), (f, a), (d, c)
+// Output: f, e, a, b, d, c
+
+
+// Problem 4.8: First Common Ancestor
+// You have two very large binary trees: T1, with millions of nodes, and T2, with hundreds of nodes. Create an algorithm to determine if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
+
+// Problem 4.9: BST Sequences
+// A binary search tree was created by traversing through an array from left to right and inserting each value. Given a binary search tree with distinct elements, print all possible arrays that could have led to this tree.
+// Example:
+// Input:
+//    2
+//   / \
+//  1   3
+// Output:
+//    [2, 1, 3], [2, 3, 1]
+
+// Problem 4.10: Check Subtree
+// T1 and T2 are two very large binary trees, with T1 much bigger than T2. Create an algorithm to check if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
+
+// Problem 4.11: Random Node
+// You are implementing a binary tree from scratch which, in addition to insert, find, and delete, has a method getRandomNode() which returns a random node. All nodes should be equally likely to be chosen. Design and implement an algorithm for this. You can use a standard binary tree or binary search tree data structure.
+// Extra: You may not use any extra space.
+
+// Problem 4.12: Paths with Sum
+// You are given a binary tree in which each node contains an integer value (which might be positive or negative). Design an algorithm to count the number of paths that sum to a given value. The path does not need to start or end at the root or a leaf, but it must go downwards (traveling only from parent nodes to child nodes).
+
 #[cfg(test)]
 mod tests {
     use super::*;
