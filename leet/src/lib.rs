@@ -1127,19 +1127,19 @@ pub fn minimal_tree_4_2(arr: &[i32]) -> Option<Box<TreeNode<i32>>> {
 // Problem 4.3: List of Depths
 // Given a binary tree, implement a method to create a linked list of all the nodes at each depth (e.g., if you have a tree with depth D, you'll have D linked lists).
 
-pub fn list_of_depths_dfs_4_3_helper(node: &Option<Box<TreeNode<i32>>>, depth: usize, depths: &mut Vec<Vec<i32>>) {
+pub fn list_of_depths_dfs_4_3_helper(node: &Option<Box<TreeNode<i32>>>, depth: usize, depths: &mut Vec<LinkedList<i32>>) {
     if let Some(node) = node {
         if depth == depths.len() {
-            depths.push(Vec::new());
+            depths.push(LinkedList::new());
         }
 
-        depths[depth].push(node.value);
+        depths[depth].push_back(node.value);
         list_of_depths_dfs_4_3_helper(&node.left, depth + 1, depths);
         list_of_depths_dfs_4_3_helper(&node.right, depth + 1, depths);
     }
 }
 
-pub fn list_of_depths_dfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<Vec<i32>> {
+pub fn list_of_depths_dfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<LinkedList<i32>> {
     let mut depths = Vec::new();
     list_of_depths_dfs_4_3_helper(&Some(Box::new(binary_tree.clone())), 0, &mut depths);
     depths
@@ -2255,27 +2255,56 @@ mod tests {
         // Test with a single-node tree
         let single_node_tree = TreeNode::new(10);
         let result = list_of_depths_dfs_4_3(&single_node_tree);
-        assert_eq!(result, vec![vec![10]]);
+        let mut expected = LinkedList::new();
+        expected.push_back(10);
+        assert_eq!(result, vec![expected]);
 
-        // Test with a balanced tree
-        let mut root = TreeNode::new(1);
-        root.left = Some(Box::new(TreeNode::new(2)));
-        root.right = Some(Box::new(TreeNode::new(3)));
-        root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
-        root.left.as_mut().unwrap().right = Some(Box::new(TreeNode::new(5)));
-        root.right.as_mut().unwrap().left = Some(Box::new(TreeNode::new(6)));
-        root.right.as_mut().unwrap().right = Some(Box::new(TreeNode::new(7)));
+    // Test with a balanced tree
+    let mut root = TreeNode::new(1);
+    root.left = Some(Box::new(TreeNode::new(2)));
+    root.right = Some(Box::new(TreeNode::new(3)));
+    root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+    root.left.as_mut().unwrap().right = Some(Box::new(TreeNode::new(5)));
+    root.right.as_mut().unwrap().left = Some(Box::new(TreeNode::new(6)));
+    root.right.as_mut().unwrap().right = Some(Box::new(TreeNode::new(7)));
 
-        let result = list_of_depths_dfs_4_3(&root);
-        assert_eq!(result, vec![vec![1], vec![2, 3], vec![4, 5, 6, 7]]);
+    let result = list_of_depths_dfs_4_3(&root);
 
-        // Test with an unbalanced tree
-        let mut unbalanced_root = TreeNode::new(1);
-        unbalanced_root.left = Some(Box::new(TreeNode::new(2)));
-        unbalanced_root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(3)));
-        unbalanced_root.left.as_mut().unwrap().left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+    let mut level_1 = LinkedList::new();
+    level_1.push_back(1);
 
-        let result = list_of_depths_dfs_4_3(&unbalanced_root);
-        assert_eq!(result, vec![vec![1], vec![2], vec![3], vec![4]]);
+    let mut level_2 = LinkedList::new();
+    level_2.push_back(2);
+    level_2.push_back(3);
+
+    let mut level_3 = LinkedList::new();
+    level_3.push_back(4);
+    level_3.push_back(5);
+    level_3.push_back(6);
+    level_3.push_back(7);
+
+    assert_eq!(result, vec![level_1, level_2, level_3]);
+
+    // Test with an unbalanced tree
+    let mut unbalanced_root = TreeNode::new(1);
+    unbalanced_root.left = Some(Box::new(TreeNode::new(2)));
+    unbalanced_root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(3)));
+    unbalanced_root.left.as_mut().unwrap().left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+
+    let result = list_of_depths_dfs_4_3(&unbalanced_root);
+
+    let mut level_1 = LinkedList::new();
+    level_1.push_back(1);
+
+    let mut level_2 = LinkedList::new();
+    level_2.push_back(2);
+
+    let mut level_3 = LinkedList::new();
+    level_3.push_back(3);
+
+    let mut level_4 = LinkedList::new();
+    level_4.push_back(4);
+
+    assert_eq!(result, vec![level_1, level_2, level_3, level_4]);
     }
 }
