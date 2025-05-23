@@ -1216,6 +1216,9 @@ pub fn check_balanced_leaf_depth_4_4(binary_tree: &TreeNode<i32>) -> bool {
     max_leaf_depth - min_leaf_depth < 2
 }
 
+// Now with real balanced definition
+// TODO
+
 // Problem 4.5: Validate BST
 // Implement a function to check if a binary tree is a binary search tree.
 
@@ -2400,32 +2403,27 @@ mod tests {
     }
 
     #[test]
-    fn test_check_balanced_4_4_single_node() {
+    fn test_check_balanced_4_4() {
+        // Single node
         let root = TreeNode::new(1);
         assert!(check_balanced_leaf_depth_4_4(&root));
-    }
 
-    #[test]
-    fn test_check_balanced_4_4_perfectly_balanced_tree() {
+        // Perfectly balanced
         let tree = TreeNode::with_children(
             1,
             Some(TreeNode::with_children(2, Some(TreeNode::new(4)), Some(TreeNode::new(5)))),
             Some(TreeNode::with_children(3, Some(TreeNode::new(6)), Some(TreeNode::new(7)))),
         );
         assert!(check_balanced_leaf_depth_4_4(&tree));
-    }
 
-    #[test]
-    fn test_check_balanced_4_4_leaf_depth_differs_by_one() {
+        // Depth differs by 1
         let mut root = TreeNode::new(1);
         root.left = Some(Box::new(TreeNode::new(2)));
         root.right = Some(Box::new(TreeNode::with_children(3, Some(TreeNode::new(4)), Some(TreeNode::new(5)))));
         assert!(check_balanced_leaf_depth_4_4(&root));
         // Note: if the only leaf was deep in the left, our algo would consider it balanced, as per the instructions
-    }
 
-    #[test]
-    fn test_check_balanced_4_4_unbalanced_tree() {
+        // Unbalanced
         let mut deep_branch = TreeNode::new(2);
         deep_branch.left = Some(Box::new(TreeNode::new(3)));
         deep_branch.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
