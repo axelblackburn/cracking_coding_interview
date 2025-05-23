@@ -1280,6 +1280,42 @@ pub fn validate_bst_4_5(binary_tree: &TreeNode<i32>) -> bool {
 // Problem 4.6: Successor
 // Write an algorithm to find the "next" node (i.e., in-order successor) of a given node in a binary search tree. You may assume that each node has a link to its parent.
 
+// pub struct LinkedTreeNode<'a> {
+//     value: i32,
+//     parent: Option<&'a Box<LinkedTreeNode<'a>>>,
+//     left: Option<Box<LinkedTreeNode<'a>>>,
+//     right: Option<Box<LinkedTreeNode<'a>>>,
+// }
+
+// impl<'a> LinkedTreeNode<'a> {
+//     pub fn new(value: i32, parent: Option<&'a Box<LinkedTreeNode>>) -> Self {
+//         LinkedTreeNode { value: value, parent: parent, left: None, right: None }
+//     }
+
+//     pub fn add_left(&mut self, value: i32) {
+//         self.left = Some(Box::new(LinkedTreeNode::new(value, self)));
+//     }
+
+//     pub fn add_right(&mut self, value: i32) {
+//         self.right = Some(Box::new(LinkedTreeNode::new(value, self)));
+//     }
+// }
+
+// pub fn find_next_node_4_6(node: &LinkedTreeNode) -> Option<&LinkedTreeNode> {
+//     let value = node.value;
+//     if let Some(right_child) = node.right {
+//         Some(&right_child) // TODO this is wrong, we need to go upmost left of right child
+//     } else if !node.parent.is_null() {
+//         unsafe {
+//             return Some(&*node.parent);
+//         };
+//     } else {
+//         None
+//     }
+// }
+
+// Let's do this in C for now
+
 // Problem 4.7: Build Order
 // You are given a list of projects and a list of dependencies (which is a list of pairs of projects, where the second project is dependent on the first project). All of a project's dependencies must be built before the project is. Find a build order that will allow the projects to be built. If there is no valid build order, return an error.
 // Example:

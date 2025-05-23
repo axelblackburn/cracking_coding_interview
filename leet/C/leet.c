@@ -154,3 +154,31 @@ Node *detect_loop_2_8(SinglyLinkedList *list) {
 
     return slow_runner;
 }
+
+// Problem 4.6: Successor
+// Write an algorithm to find the "next" node (i.e., in-order successor) of a given node in a binary search tree. 
+// You may assume that each node has a link to its parent.
+
+const LinkedTreeNode * get_upmost_left_child(const LinkedTreeNode *node) {
+    if (!node) {
+        return NULL;
+    }
+
+    if (node->left) {
+        return get_upmost_left_child(node->left);
+    }
+
+    return node;
+}
+
+const LinkedTreeNode * find_next_node_4_6(const LinkedTreeNode *node) {
+    if (!node) {
+        return NULL;
+    }
+
+    if (node->right) {
+        return get_upmost_left_child(node->right);
+    }
+
+    return node->parent;
+}
