@@ -1109,11 +1109,11 @@ impl<T> TreeNode<T> {
         }
     }
 
-    pub fn with_children(value: T, left: TreeNode<T>, right: TreeNode<T>) -> Self {
+    pub fn with_children(value: T, left: Option<TreeNode<T>>, right: Option<TreeNode<T>>) -> Self {
         TreeNode {
             value,
-            left: Some(Box::new(left)),
-            right: Some(Box::new(right)),
+            left: left.map(Box::new),
+            right: right.map(Box::new),
         }
     }
 }
@@ -1182,9 +1182,10 @@ pub fn list_of_depths_bfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<LinkedList<i32
 }
 
 // Problem 4.4: Check Balanced
-// Implement a function to check if a binary tree is balanced. For the purposes of this question, a balanced tree is defined to be a tree such that no two leaf nodes differ in distance from the root by more than one.
+// Implement a function to check if a binary tree is balanced. 
+// For the purposes of this question, a balanced tree is defined to be a tree such that no two leaf nodes differ in distance from the root by more than one.
 
-fn check_balanced_4_4_helper(binary_tree: &TreeNode<i32>, min_leaf_depth: &mut isize, max_leaf_depth: &mut isize, depth: isize) {
+fn check_balanced_leaf_depth_4_4_helper(binary_tree: &TreeNode<i32>, min_leaf_depth: &mut isize, max_leaf_depth: &mut isize, depth: isize) {
     match (&binary_tree.left, &binary_tree.right) {
         (None, None) => {
             // We found a leaf
@@ -1196,27 +1197,49 @@ fn check_balanced_4_4_helper(binary_tree: &TreeNode<i32>, min_leaf_depth: &mut i
             }
         },
         (Some(node), None) => {
-            check_balanced_4_4_helper(&node, min_leaf_depth, max_leaf_depth, depth + 1);
+            check_balanced_leaf_depth_4_4_helper(&node, min_leaf_depth, max_leaf_depth, depth + 1);
         },
         (None, Some(node)) => {
-            check_balanced_4_4_helper(&node, min_leaf_depth, max_leaf_depth, depth + 1);
+            check_balanced_leaf_depth_4_4_helper(&node, min_leaf_depth, max_leaf_depth, depth + 1);
         },
         (Some(left), Some(right)) => {
-            check_balanced_4_4_helper(&left, min_leaf_depth, max_leaf_depth, depth + 1); 
-            check_balanced_4_4_helper(&right, min_leaf_depth, max_leaf_depth, depth + 1);
+            check_balanced_leaf_depth_4_4_helper(&left, min_leaf_depth, max_leaf_depth, depth + 1); 
+            check_balanced_leaf_depth_4_4_helper(&right, min_leaf_depth, max_leaf_depth, depth + 1);
         }
     }
 }
 
-pub fn check_balanced_4_4(binary_tree: &TreeNode<i32>) -> bool {
+pub fn check_balanced_leaf_depth_4_4(binary_tree: &TreeNode<i32>) -> bool {
     let (mut min_leaf_depth, mut max_leaf_depth) = (-1, -1);
-    check_balanced_4_4_helper(binary_tree, &mut min_leaf_depth, &mut max_leaf_depth, 0);
+    check_balanced_leaf_depth_4_4_helper(binary_tree, &mut min_leaf_depth, &mut max_leaf_depth, 0);
     println!("{min_leaf_depth} {max_leaf_depth}");
     max_leaf_depth - min_leaf_depth < 2
 }
 
 // Problem 4.5: Validate BST
 // Implement a function to check if a binary tree is a binary search tree.
+
+pub fn validate_bst_4_5_helper(binary_tree: &Option<Box<TreeNode<i32>>>) -> (bool, i32 /* min */, i32 /* max */) {
+    if let Some(node) = binary_tree {
+        let (left_result, left_min, left_max) = validate_bst_4_5_helper(&node.left);
+        let (right_result, right_min, right_max) = validate_bst_4_5_helper(&node.right);
+        // Let's not allow duplicates
+        if !left_result || !right_result || left_max >= node.value || right_min <= node.value {
+            return (false, 0, 0)
+        }
+
+        let min = node.value.min(left_min);
+        let max = node.value.max(right_max);
+
+         (true, min, max)
+    } else {
+        (true, i32::max_value(), i32::min_value())
+    }
+}
+
+pub fn validate_bst_4_5(binary_tree: &TreeNode<i32>) -> bool {
+    validate_bst_4_5_helper(&Some(Box::new(binary_tree.clone()))).0
+}
 
 // Problem 4.6: Successor
 // Write an algorithm to find the "next" node (i.e., in-order successor) of a given node in a binary search tree. You may assume that each node has a link to its parent.
@@ -2379,25 +2402,25 @@ mod tests {
     #[test]
     fn test_check_balanced_4_4_single_node() {
         let root = TreeNode::new(1);
-        assert!(check_balanced_4_4(&root));
+        assert!(check_balanced_leaf_depth_4_4(&root));
     }
 
     #[test]
     fn test_check_balanced_4_4_perfectly_balanced_tree() {
         let tree = TreeNode::with_children(
             1,
-            TreeNode::with_children(2, TreeNode::new(4), TreeNode::new(5)),
-            TreeNode::with_children(3, TreeNode::new(6), TreeNode::new(7)),
+            Some(TreeNode::with_children(2, Some(TreeNode::new(4)), Some(TreeNode::new(5)))),
+            Some(TreeNode::with_children(3, Some(TreeNode::new(6)), Some(TreeNode::new(7)))),
         );
-        assert!(check_balanced_4_4(&tree));
+        assert!(check_balanced_leaf_depth_4_4(&tree));
     }
 
     #[test]
     fn test_check_balanced_4_4_leaf_depth_differs_by_one() {
         let mut root = TreeNode::new(1);
         root.left = Some(Box::new(TreeNode::new(2)));
-        root.right = Some(Box::new(TreeNode::with_children(3, TreeNode::new(4), TreeNode::new(5))));
-        assert!(check_balanced_4_4(&root));
+        root.right = Some(Box::new(TreeNode::with_children(3, Some(TreeNode::new(4)), Some(TreeNode::new(5)))));
+        assert!(check_balanced_leaf_depth_4_4(&root));
         // Note: if the only leaf was deep in the left, our algo would consider it balanced, as per the instructions
     }
 
@@ -2406,7 +2429,38 @@ mod tests {
         let mut deep_branch = TreeNode::new(2);
         deep_branch.left = Some(Box::new(TreeNode::new(3)));
         deep_branch.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
-        let root = TreeNode::with_children(1, deep_branch, TreeNode::new(5));
-        assert!(!check_balanced_4_4(&root));
+        let root = TreeNode::with_children(1, Some(deep_branch), Some(TreeNode::new(5)));
+        assert!(!check_balanced_leaf_depth_4_4(&root));
     }
+
+    #[test]
+    fn test_validate_bst_4_5() {
+        // Valid BST
+        let tree = TreeNode::with_children(4, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), Some(TreeNode::new(3)))), Some(TreeNode::with_children(6, Some(TreeNode::new(5)), Some(TreeNode::new(7)))));
+        assert!(validate_bst_4_5(&tree));
+
+        // Not valid from the left
+        let tree = TreeNode::with_children(4, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), Some(TreeNode::new(5)))), Some(TreeNode::with_children(6, Some(TreeNode::new(5)), Some(TreeNode::new(7)))));
+        assert!(!validate_bst_4_5(&tree));
+
+        // Not valid from the right
+        let tree = TreeNode::with_children(4, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), Some(TreeNode::new(3)))), Some(TreeNode::with_children(6, Some(TreeNode::new(1)), Some(TreeNode::new(7)))));
+        assert!(!validate_bst_4_5(&tree));
+
+        // Duplicates
+        let tree = TreeNode::with_children(4, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), Some(TreeNode::new(3)))), Some(TreeNode::with_children(6, Some(TreeNode::new(4)), Some(TreeNode::new(7)))));
+        assert!(!validate_bst_4_5(&tree));
+
+        // Single-node tree 
+        let tree = TreeNode::new(42);
+        assert!(validate_bst_4_5(&tree));
+
+        // Right-skewed invalid tre
+        let tree = TreeNode::with_children(3, None, Some(TreeNode::with_children(2, None, Some(TreeNode::new(1)))));
+        assert!(!validate_bst_4_5(&tree));
+
+        // Valid unbalanced but BST
+        let tree = TreeNode::with_children(5, Some(TreeNode::with_children(3, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), None)), None)), None);
+        assert!(validate_bst_4_5(&tree));
+     }
 }
