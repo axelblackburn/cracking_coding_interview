@@ -1145,7 +1145,33 @@ pub fn list_of_depths_dfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<LinkedList<i32
     depths
 }
 
-// TODO BFS
+pub fn list_of_depths_bfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<LinkedList<i32>> {
+    let mut depths = Vec::new();
+    let mut to_visit = LinkedList::new();
+    let mut marked = HashSet::new();
+
+    struct NodeAndDepth<'a> {
+        node: &'a TreeNode<i32>,
+        depth: usize,
+    }
+
+    to_visit.push_back(NodeAndDepth{ node: binary_tree, depth: 0 });
+    while let Some(NodeAndDepth { node, depth }) = to_visit.pop_front() {
+        if depth == depths.len() {
+            depths.push(LinkedList::new());
+        }
+        depths[depth].push_back(node.value);
+        marked.insert(node.value);
+        for neighbor in [&node.left, &node.right]
+            .into_iter()
+            .filter_map(|child| child.as_deref()) {
+            if !marked.contains(&neighbor.value) {
+                to_visit.push_back(NodeAndDepth { node: neighbor, depth: depth + 1 });
+            }
+        }
+    }
+    depths
+}
 
 // Problem 4.4: Check Balanced
 // Implement a function to check if a binary tree is balanced. For the purposes of this question, a balanced tree is defined to be a tree such that no two leaf nodes differ in distance from the root by more than one.
@@ -2251,60 +2277,63 @@ mod tests {
     }
 
     #[test]
-    fn test_list_of_depths_dfs_4_3() {
-        // Test with a single-node tree
-        let single_node_tree = TreeNode::new(10);
-        let result = list_of_depths_dfs_4_3(&single_node_tree);
-        let mut expected = LinkedList::new();
-        expected.push_back(10);
-        assert_eq!(result, vec![expected]);
+    fn test_list_of_depths_4_3() {
+        let dfs_bfs = [list_of_depths_dfs_4_3, list_of_depths_bfs_4_3];
+        for fun in dfs_bfs {
+            // Test with a single-node tree
+            let single_node_tree = TreeNode::new(10);
+            let result = fun(&single_node_tree);
+            let mut expected = LinkedList::new();
+            expected.push_back(10);
+            assert_eq!(result, vec![expected]);
 
-    // Test with a balanced tree
-    let mut root = TreeNode::new(1);
-    root.left = Some(Box::new(TreeNode::new(2)));
-    root.right = Some(Box::new(TreeNode::new(3)));
-    root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
-    root.left.as_mut().unwrap().right = Some(Box::new(TreeNode::new(5)));
-    root.right.as_mut().unwrap().left = Some(Box::new(TreeNode::new(6)));
-    root.right.as_mut().unwrap().right = Some(Box::new(TreeNode::new(7)));
+            // Test with a balanced tree
+            let mut root = TreeNode::new(1);
+            root.left = Some(Box::new(TreeNode::new(2)));
+            root.right = Some(Box::new(TreeNode::new(3)));
+            root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+            root.left.as_mut().unwrap().right = Some(Box::new(TreeNode::new(5)));
+            root.right.as_mut().unwrap().left = Some(Box::new(TreeNode::new(6)));
+            root.right.as_mut().unwrap().right = Some(Box::new(TreeNode::new(7)));
 
-    let result = list_of_depths_dfs_4_3(&root);
+            let result = fun(&root);
 
-    let mut level_1 = LinkedList::new();
-    level_1.push_back(1);
+            let mut level_1 = LinkedList::new();
+            level_1.push_back(1);
 
-    let mut level_2 = LinkedList::new();
-    level_2.push_back(2);
-    level_2.push_back(3);
+            let mut level_2 = LinkedList::new();
+            level_2.push_back(2);
+            level_2.push_back(3);
 
-    let mut level_3 = LinkedList::new();
-    level_3.push_back(4);
-    level_3.push_back(5);
-    level_3.push_back(6);
-    level_3.push_back(7);
+            let mut level_3 = LinkedList::new();
+            level_3.push_back(4);
+            level_3.push_back(5);
+            level_3.push_back(6);
+            level_3.push_back(7);
 
-    assert_eq!(result, vec![level_1, level_2, level_3]);
+            assert_eq!(result, vec![level_1, level_2, level_3]);
 
-    // Test with an unbalanced tree
-    let mut unbalanced_root = TreeNode::new(1);
-    unbalanced_root.left = Some(Box::new(TreeNode::new(2)));
-    unbalanced_root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(3)));
-    unbalanced_root.left.as_mut().unwrap().left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
+            // Test with an unbalanced tree
+            let mut unbalanced_root = TreeNode::new(1);
+            unbalanced_root.left = Some(Box::new(TreeNode::new(2)));
+            unbalanced_root.left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(3)));
+            unbalanced_root.left.as_mut().unwrap().left.as_mut().unwrap().left = Some(Box::new(TreeNode::new(4)));
 
-    let result = list_of_depths_dfs_4_3(&unbalanced_root);
+            let result = fun(&unbalanced_root);
 
-    let mut level_1 = LinkedList::new();
-    level_1.push_back(1);
+            let mut level_1 = LinkedList::new();
+            level_1.push_back(1);
 
-    let mut level_2 = LinkedList::new();
-    level_2.push_back(2);
+            let mut level_2 = LinkedList::new();
+            level_2.push_back(2);
 
-    let mut level_3 = LinkedList::new();
-    level_3.push_back(3);
+            let mut level_3 = LinkedList::new();
+            level_3.push_back(3);
 
-    let mut level_4 = LinkedList::new();
-    level_4.push_back(4);
+            let mut level_4 = LinkedList::new();
+            level_4.push_back(4);
 
-    assert_eq!(result, vec![level_1, level_2, level_3, level_4]);
+            assert_eq!(result, vec![level_1, level_2, level_3, level_4]);
+        }
     }
 }
