@@ -1222,21 +1222,21 @@ pub fn check_balanced_leaf_depth_4_4(binary_tree: &TreeNode<i32>) -> bool {
 // Problem 4.5: Validate BST
 // Implement a function to check if a binary tree is a binary search tree.
 
-pub fn validate_bst_4_5_helper(binary_tree: &Option<Box<TreeNode<i32>>>) -> (bool, i32 /* min */, i32 /* max */) {
-    if let Some(node) = binary_tree {
-        let (left_result, left_min, left_max) = validate_bst_4_5_helper(&node.left);
-        let (right_result, right_min, right_max) = validate_bst_4_5_helper(&node.right);
-        // Let's not allow duplicates
-        if !left_result || !right_result || left_max >= node.value || right_min <= node.value {
-            return (false, 0, 0)
-        }
+pub fn validate_bst_4_5_helper(node: &Option<Box<TreeNode<i32>>>) -> (bool, i32 /* min */, i32 /* max */) {
+    match node {
+        Some(node) => {
+            let (left_result, left_min, left_max) = validate_bst_4_5_helper(&node.left);
+            let (right_result, right_min, right_max) = validate_bst_4_5_helper(&node.right);
+            // Let's not allow duplicates
+            if !left_result || !right_result || left_max >= node.value || right_min <= node.value {
+                return (false, 0, 0)
+            }
 
-        let min = node.value.min(left_min);
-        let max = node.value.max(right_max);
-
-         (true, min, max)
-    } else {
-        (true, i32::max_value(), i32::min_value())
+            let min = node.value.min(left_min);
+            let max = node.value.max(right_max);
+            (true, min, max)
+        },
+        None => (true, i32::MAX, i32::MIN),
     }
 }
 
