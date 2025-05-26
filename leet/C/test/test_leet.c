@@ -49,18 +49,24 @@ void test_detect_loop_2_8(void) {
 }
 
 void test_find_next_node_4_6(void) {
+    LinkedTreeNode left_right_node = { .value = 3, .parent = NULL, .left = NULL, .right = NULL };
     LinkedTreeNode left_node = { .value = 2, .parent = NULL, .left = NULL, .right = NULL };
-    LinkedTreeNode right_left_node = { .value = 4, .parent = NULL, .left = NULL, .right = NULL };
-    LinkedTreeNode right_right_node = { .value = 6, .parent = NULL, .left = NULL, .right = NULL };
-    LinkedTreeNode right_node = { .value = 5, .parent = NULL, .left = &right_left_node, .right = &right_right_node };
+    left_node.right = &left_right_node;
+    left_right_node.parent = &left_node;
+
+    LinkedTreeNode right_left_node = { .value = 5, .parent = NULL, .left = NULL, .right = NULL };
+    LinkedTreeNode right_right_node = { .value = 7, .parent = NULL, .left = NULL, .right = NULL };
+    LinkedTreeNode right_node = { .value = 6, .parent = NULL, .left = &right_left_node, .right = &right_right_node };
     right_left_node.parent = &right_node;
     right_right_node.parent = &right_node;
-    LinkedTreeNode root = { .value = 3, .parent = NULL, .left = &left_node, .right = &right_node };
+
+    LinkedTreeNode root = { .value = 4, .parent = NULL, .left = &left_node, .right = &right_node };
     left_node.parent = &root;
     right_node.parent = &root;
 
     TEST_ASSERT_EQUAL(find_next_node_4_6(&root), &right_left_node);
     TEST_ASSERT_EQUAL(find_next_node_4_6(&right_left_node), &right_node);
+    TEST_ASSERT_EQUAL(find_next_node_4_6(&left_right_node), &root);
 }
 
 int main(void) {

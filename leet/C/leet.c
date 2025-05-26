@@ -180,5 +180,12 @@ const LinkedTreeNode * find_next_node_4_6(const LinkedTreeNode *node) {
         return get_upmost_left_child(node->right);
     }
 
-    return node->parent;
+    // If the node has no right child, traverse up the tree until we find a node that is a left child of its parent.
+    const LinkedTreeNode* current = node;
+    const LinkedTreeNode* parent = node->parent;
+    while (parent && parent->right == current) {
+        current = parent;
+        parent = parent->parent;
+    }
+    return parent;
 }

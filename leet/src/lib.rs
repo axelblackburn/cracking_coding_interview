@@ -1324,6 +1324,9 @@ pub fn validate_bst_4_5(binary_tree: &TreeNode<i32>) -> bool {
 //    dependencies: (a, d), (f, b), (b, d), (f, a), (d, c)
 // Output: f, e, a, b, d, c
 
+// Brainstorm: I guess we find the root, remove it, and repeat?
+// No valid build would mean a loop, so we need loop detection as well.
+// Ugh...
 
 // Problem 4.8: First Common Ancestor
 // You have two very large binary trees: T1, with millions of nodes, and T2, with hundreds of nodes. Create an algorithm to determine if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
