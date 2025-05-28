@@ -1,12 +1,51 @@
-
+use rand::Rng;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::LinkedList;
 use std::collections::VecDeque;
 use std::rc::Rc;
-use std::cell::RefCell;
 use std::rc::Weak;
 
+// Quicksort
+
+fn quicksort_helper_recursive(slice: &mut [i32]) {
+    let len = slice.len();
+    if len <= 1 {
+        return;
+    }
+
+    let partition_index = quicksort_helper_partition(slice);
+
+    let (left, right) = slice.split_at_mut(partition_index);
+    quicksort_helper_recursive(left);
+    quicksort_helper_recursive(right);
+}
+
+fn quicksort_helper_partition(slice: &mut [i32]) -> usize {
+    let mut rng = rand::rng();
+    let len = slice.len();
+    let pivot_random_index = rng.random_range(0..len);
+    slice.swap(pivot_random_index, len - 1);
+
+    let pivot = slice[len - 1];
+    let mut pivot_index = 0;
+
+    for i in 0 .. len - 1 {
+        if slice[i] <= pivot {
+            slice.swap(pivot_index, i);
+            pivot_index += 1;
+        }
+    }
+
+    slice.swap(pivot_index, len - 1);
+
+    pivot_index
+}
+
+pub fn quicksort(list: &mut [i32]) {
+    quicksort_helper_recursive(list);
+}
 
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
@@ -1413,6 +1452,33 @@ pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCel
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_quicksort() {
+        let mut arr = vec![3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]);
+
+        let mut arr = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        let mut arr = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+
+        let mut arr = vec![1];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![1]);
+
+        let mut arr: Vec<i32> = vec![];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![]);
+
+        let mut arr = vec![5, 5, 5, 5, 5];
+        quicksort(&mut arr);
+        assert_eq!(arr, vec![5, 5, 5, 5, 5]);
+    }
 
     #[test]
     fn test_is_unique_1_1_hashmap() {
