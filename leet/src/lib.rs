@@ -19,7 +19,7 @@ fn quicksort_helper_recursive(slice: &mut [i32]) {
 
     let (left, right) = slice.split_at_mut(partition_index);
     quicksort_helper_recursive(left);
-    quicksort_helper_recursive(right);
+    quicksort_helper_recursive(&mut right[1..]);
 }
 
 fn quicksort_helper_partition(slice: &mut [i32]) -> usize {
@@ -99,19 +99,26 @@ pub fn mergesort_topdown(input: &mut [i32]) {
 
 // Bottom Up
 pub fn mergesort_bottomup(input: &mut [i32]) {
+    let len = input.len();
+    if len <= 1 {
+        return;
+    }
+
     let mut buffer = input.to_vec();
+    let mut source = input;
+    let mut dest = &mut buffer[..];
 
     let mut width = 1;
-    let len = input.len();
     while width < len {
         let mut i = 0;
         while i < len {
             let middle = len.min(i + width);
             let end = len.min(i + 2 * width);
-            mergesort_helper_merge(&mut buffer[i..end], &input[i..middle], &input[middle..end]);
+            mergesort_helper_merge(&mut dest[i..end], &source[i..middle], &source[middle..end]);
             i += 2 * width;
         }
-        input.copy_from_slice(&buffer);
+
+        std::mem::swap(&mut source, &mut dest);
         width *= 2;
     }
 }
@@ -1291,7 +1298,7 @@ pub fn list_of_depths_bfs_4_3(binary_tree: &TreeNode<i32>) -> Vec<LinkedList<i32
 }
 
 // Problem 4.4: Check Balanced
-// Implement a function to check if a binary tree is balanced. 
+// Implement a function to check if a binary tree is balanced.
 // For the purposes of this question, a balanced tree is defined to be a tree such that no two leaf nodes differ in distance from the root by more than one.
 
 fn check_balanced_leaf_depth_4_4_helper(binary_tree: &TreeNode<i32>, min_leaf_depth: &mut isize, max_leaf_depth: &mut isize, depth: isize) {
@@ -1312,7 +1319,7 @@ fn check_balanced_leaf_depth_4_4_helper(binary_tree: &TreeNode<i32>, min_leaf_de
             check_balanced_leaf_depth_4_4_helper(&node, min_leaf_depth, max_leaf_depth, depth + 1);
         },
         (Some(left), Some(right)) => {
-            check_balanced_leaf_depth_4_4_helper(&left, min_leaf_depth, max_leaf_depth, depth + 1); 
+            check_balanced_leaf_depth_4_4_helper(&left, min_leaf_depth, max_leaf_depth, depth + 1);
             check_balanced_leaf_depth_4_4_helper(&right, min_leaf_depth, max_leaf_depth, depth + 1);
         }
     }
@@ -1348,7 +1355,7 @@ fn check_balanced_4_4_helper(binary_tree: &TreeNode<i32>, min_none_depth: &mut i
             check_balanced_4_4_helper(&node, min_none_depth, max_none_depth, depth + 1);
         },
         (Some(left), Some(right)) => {
-            check_balanced_4_4_helper(&left, min_none_depth, max_none_depth, depth + 1); 
+            check_balanced_4_4_helper(&left, min_none_depth, max_none_depth, depth + 1);
             check_balanced_4_4_helper(&right, min_none_depth, max_none_depth, depth + 1);
         }
     }
@@ -2735,7 +2742,7 @@ mod tests {
         let tree = TreeNode::with_children(4, Some(TreeNode::with_children(2, Some(TreeNode::new(1)), Some(TreeNode::new(3)))), Some(TreeNode::with_children(6, Some(TreeNode::new(4)), Some(TreeNode::new(7)))));
         assert!(!validate_bst_4_5(&tree));
 
-        // Single-node tree 
+        // Single-node tree
         let tree = TreeNode::new(42);
         assert!(validate_bst_4_5(&tree));
 
