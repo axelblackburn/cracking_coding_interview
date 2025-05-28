@@ -47,6 +47,75 @@ pub fn quicksort(list: &mut [i32]) {
     quicksort_helper_recursive(list);
 }
 
+// Merge sort
+
+fn mergesort_helper_merge(output: &mut [i32], left_buffer: &[i32], right_buffer: &[i32]) {
+    let mut i = 0;
+    let mut j = 0;
+    let mut k = 0;
+
+    while i < left_buffer.len() && j < right_buffer.len() {
+        if left_buffer[i] <= right_buffer[j] {
+            output[k] = left_buffer[i];
+            i += 1;
+        } else {
+            output[k] = right_buffer[j];
+            j += 1;
+        }
+        k += 1;
+    }
+
+    while i < left_buffer.len() {
+        output[k] = left_buffer[i];
+        i += 1;
+        k += 1;
+    }
+
+    while j < right_buffer.len() {
+        output[k] = right_buffer[j];
+        j += 1;
+        k += 1;
+    }
+}
+
+// Top Down
+fn mergesort_topdown_helper_split(input: &mut [i32], buffer: &mut [i32]) {
+    let len = input.len();
+    if len <= 1 {
+        return;
+    }
+
+    let index_middle = len / 2;
+    mergesort_topdown_helper_split(&mut buffer[..index_middle], &mut input[..index_middle]);
+    mergesort_topdown_helper_split(&mut buffer[index_middle..], &mut input[index_middle..]);
+    mergesort_helper_merge(input, &buffer[..index_middle], &buffer[index_middle..]);
+}
+
+
+pub fn mergesort_topdown(input: &mut [i32]) {
+    let mut buffer = input.to_vec();
+    mergesort_topdown_helper_split(input, &mut buffer);
+}
+
+// Bottom Up
+pub fn mergesort_bottomup(input: &mut [i32]) {
+    let mut buffer = input.to_vec();
+
+    let mut width = 1;
+    let len = input.len();
+    while width < len {
+        let mut i = 0;
+        while i < len {
+            let middle = len.min(i + width);
+            let end = len.min(i + 2 * width);
+            mergesort_helper_merge(&mut buffer[i..end], &input[i..middle], &input[middle..end]);
+            i += 2 * width;
+        }
+        input.copy_from_slice(&buffer);
+        width *= 2;
+    }
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -1451,33 +1520,46 @@ pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCel
 
 #[cfg(test)]
 mod tests {
+    use rand::seq::SliceRandom;
+
     use super::*;
 
     #[test]
-    fn test_quicksort() {
-        let mut arr = vec![3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]);
+    fn test_sorts() {
+        let sorts = [quicksort, mergesort_bottomup, mergesort_topdown];
+        for sort in sorts {
+            let mut arr = vec![3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5];
+            sort(&mut arr);
+            assert_eq!(arr, vec![1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]);
 
-        let mut arr = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let mut arr = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
+            sort(&mut arr);
+            assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-        let mut arr = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            let mut arr = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+            sort(&mut arr);
+            assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
 
-        let mut arr = vec![1];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![1]);
+            let mut arr = vec![1];
+            sort(&mut arr);
+            assert_eq!(arr, vec![1]);
 
-        let mut arr: Vec<i32> = vec![];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![]);
+            let mut arr: Vec<i32> = vec![];
+            sort(&mut arr);
+            assert_eq!(arr, vec![]);
 
-        let mut arr = vec![5, 5, 5, 5, 5];
-        quicksort(&mut arr);
-        assert_eq!(arr, vec![5, 5, 5, 5, 5]);
+            let mut arr = vec![5, 5, 5, 5, 5];
+            sort(&mut arr);
+            assert_eq!(arr, vec![5, 5, 5, 5, 5]);
+
+            let goal: Vec<i32> = (1..=1000).collect();
+            for _ in 0..10 {
+                let mut arr = goal.clone();
+                arr.shuffle(&mut rand::rng());
+                sort(&mut arr);
+                assert_eq!(arr, goal);
+            }
+        }
     }
 
     #[test]
