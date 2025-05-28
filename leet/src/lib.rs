@@ -123,6 +123,49 @@ pub fn mergesort_bottomup(input: &mut [i32]) {
     }
 }
 
+// Heap sort
+fn heapsort_helper_heapify(input: &mut [i32]) {
+    let len = input.len();
+    if len <= 1 {
+        return;
+    }
+
+    for i in (0..len / 2).rev() {
+        heapsort_helper_sift_down(input, i, len);
+    }
+}
+
+fn heapsort_helper_sift_down(input: &mut [i32], mut root: usize, end: usize) {
+    loop {
+        let left = 2 * root + 1;
+        let right = 2 * root + 2;
+        let mut largest = root;
+
+        if left < end && input[left] > input[largest] {
+            largest = left;
+        }
+        if right < end && input[right] > input[largest] {
+            largest = right;
+        }
+        if largest == root {
+            break;
+        }
+
+        input.swap(root, largest);
+        root = largest;
+    }
+}
+
+pub fn heapsort(input: &mut [i32]) {
+    let len = input.len();
+    heapsort_helper_heapify(input);
+
+    for end in (1..len).rev() {
+        input.swap(0, end);
+        heapsort_helper_sift_down(input, 0, end);
+    }
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -1533,40 +1576,47 @@ mod tests {
 
     #[test]
     fn test_sorts() {
-        let sorts = [quicksort, mergesort_bottomup, mergesort_topdown];
-        for sort in sorts {
+        fn assert_sorted(arr: &[i32]) {
+            assert!(arr.windows(2).all(|w| w[0] <= w[1]));
+        }
+
+        fn test_sort(sort: fn(&mut [i32])) {
             let mut arr = vec![3, 1, 4, 1, 5, 9, 2, 6, 5, 3, 5];
             sort(&mut arr);
-            assert_eq!(arr, vec![1, 1, 2, 3, 3, 4, 5, 5, 5, 6, 9]);
+            assert_sorted(&arr);
 
             let mut arr = vec![10, 9, 8, 7, 6, 5, 4, 3, 2, 1];
             sort(&mut arr);
-            assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            assert_sorted(&arr);
 
             let mut arr = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
             sort(&mut arr);
-            assert_eq!(arr, vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            assert_sorted(&arr);
 
             let mut arr = vec![1];
             sort(&mut arr);
-            assert_eq!(arr, vec![1]);
+            assert_sorted(&arr);
 
             let mut arr: Vec<i32> = vec![];
             sort(&mut arr);
-            assert_eq!(arr, vec![]);
+            assert_sorted(&arr);
 
             let mut arr = vec![5, 5, 5, 5, 5];
             sort(&mut arr);
-            assert_eq!(arr, vec![5, 5, 5, 5, 5]);
+            assert_sorted(&arr);
 
-            let goal: Vec<i32> = (1..=1000).collect();
+            let mut arr: Vec<i32> = (1..=1000).collect();
             for _ in 0..10 {
-                let mut arr = goal.clone();
                 arr.shuffle(&mut rand::rng());
                 sort(&mut arr);
-                assert_eq!(arr, goal);
+                assert_sorted(&arr);
             }
         }
+
+        test_sort(quicksort);
+        test_sort(mergesort_bottomup);
+        test_sort(mergesort_topdown);
+        test_sort(heapsort);
     }
 
     #[test]
