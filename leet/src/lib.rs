@@ -1324,59 +1324,54 @@ impl LinkedTreeNode {
 
 pub fn get_upmost_left_child(mut node: Rc<RefCell<LinkedTreeNode>>) -> Rc<RefCell<LinkedTreeNode>> {
     loop {
-        let next_left = {
-            let node_ref = node.borrow();
-            node_ref.left.clone()
-        };
-
-        match next_left {
-            Some(left) => node = left,
-            None => break,
+        let left = node.borrow().left.clone();
+        match left {
+            Some(next) => node = next,
+            None => return node,
         }
     }
-
-    node
 }
 
 pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCell<LinkedTreeNode>>> {
     // Case 1: Right child exists — go down to leftmost node of the right subtree
-    let right_child = {
-        let node_ref = node.borrow();
-        node_ref.right.clone()
-    };
-
-    if let Some(right) = right_child {
+    if let Some(right) = node.borrow().right.clone() {
         return Some(get_upmost_left_child(right));
     }
 
     // Case 2: No right child — walk up until we find a node that is a left child
     let mut current = node;
 
-    while let Some(parent_weak) = {
-        let current_ref = current.borrow();
-        current_ref.parent.clone()
-    } {
-        if let Some(parent) = parent_weak.upgrade() {
-            let is_left_child = {
-                let parent_ref = parent.borrow();
-                if let Some(left) = &parent_ref.left {
-                    Rc::ptr_eq(left, &current)
+    loop {
+        let parent_weak = {
+            let current_ref = current.borrow();
+            current_ref.parent.clone()
+        };
+
+        match parent_weak {
+            Some(weak) => {
+                if let Some(parent_rc) = weak.upgrade() {
+                    let is_left_child = {
+                        let parent_ref = parent_rc.borrow();
+                        if let Some(left_child) = &parent_ref.left {
+                            Rc::ptr_eq(left_child, &current)
+                        } else {
+                            false
+                        }
+                    };
+
+                    if is_left_child {
+                        return Some(parent_rc);
+                    }
+
+                    current = parent_rc;
                 } else {
-                    false
+                    break;
                 }
-            };
-
-            if is_left_child {
-                return Some(parent);
             }
-
-            current = parent;
-        } else {
-            break;
+            None => break,
         }
     }
 
-    // No successor found
     None
 }
 
@@ -2615,8 +2610,8 @@ mod tests {
         //    5   15     35
         //         \    /
         //         17  32
-        //        /
-        //      16
+        //        /     \
+        //      16       33
 
         // Build tree bottom-up
         let root = LinkedTreeNode::new(20);
@@ -2637,6 +2632,8 @@ mod tests {
         LinkedTreeNode::add_right(&right, 35);
         let right_right = right.borrow().right.as_ref().unwrap().clone();
         LinkedTreeNode::add_left(&right_right, 32);
+        let right_right_left = right_right.borrow().left.as_ref().unwrap().clone();
+        LinkedTreeNode::add_right(&right_right_left, 33);
 
         // Helper to find node by value (DFS)
         fn find_node(node: &TreeLink, value: i32) -> Option<Rc<RefCell<LinkedTreeNode>>> {
@@ -2656,11 +2653,10 @@ mod tests {
 
         // 1. Node with right child: 10 -> 15 (leftmost of right subtree)
         let node_10 = find_node(&Some(root.clone()), 10).unwrap();
-        let node_15 = find_node(&Some(root.clone()), 15).unwrap();
         assert!(find_next_node_4_6(node_10.clone()).map(|n| n.borrow().value) == Some(15));
 
         // 2. Node with right child and right subtree has left descendants: 15 -> 16
-        let node_16 = find_node(&Some(root.clone()), 16).unwrap();
+        let node_15 = find_node(&Some(root.clone()), 15).unwrap();
         assert!(find_next_node_4_6(node_15.clone()).map(|n| n.borrow().value) == Some(16));
 
         // 3. Node with no right child, is left child: 5 -> 10
@@ -2668,6 +2664,7 @@ mod tests {
         assert!(find_next_node_4_6(node_5.clone()).map(|n| n.borrow().value) == Some(10));
 
         // 4. Node with no right child, is right child: 16 -> 17
+        let node_16 = find_node(&Some(root.clone()), 16).unwrap();
         assert!(find_next_node_4_6(node_16.clone()).map(|n| n.borrow().value) == Some(17));
 
         // 5. Node with no right child, must go up multiple parents: 17 -> 20
@@ -2676,17 +2673,17 @@ mod tests {
 
         // 6. Node with right child: 30 -> 32
         let node_30 = find_node(&Some(root.clone()), 30).unwrap();
-        let node_32 = find_node(&Some(root.clone()), 32).unwrap();
         assert!(find_next_node_4_6(node_30.clone()).map(|n| n.borrow().value) == Some(32));
 
-        // 7. Node with no right child, is left child: 32 -> 35
+        // 7. Node with no right child, is rightmost: 35 -> None
         let node_35 = find_node(&Some(root.clone()), 35).unwrap();
-        assert!(find_next_node_4_6(node_32.clone()).map(|n| n.borrow().value) == Some(35));
-
-        // 8. Node with no right child, is rightmost: 35 -> None
         assert!(find_next_node_4_6(node_35.clone()).is_none());
 
-        // 9. Root node: 20 -> 30
+        // 8. Root node: 20 -> 30
         assert!(find_next_node_4_6(root.clone()).map(|n| n.borrow().value) == Some(30));
+
+        // 9. Node that is a right child that needs to go up twice: 33 -> 35
+        let node_33 = find_node(&Some(root.clone()), 33).unwrap();
+        assert!(find_next_node_4_6(node_33.clone()).map(|n| n.borrow().value) == Some(35));
     }
 }
