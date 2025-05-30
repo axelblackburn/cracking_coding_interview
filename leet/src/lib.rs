@@ -176,20 +176,17 @@ pub fn amazon_num_ways(n: usize) -> usize {
         return 1;
     }
 
-    if n == 2 {
-        return 2;
+    // Highly inefficient
+    // return amazon_num_ways(n - 2) + amazon_num_ways(n - 1);
+
+    let mut last_two: [usize; 2] = [1, 1];
+    for _ in 2..n {
+        let three_ago = last_two[0];
+        last_two[0] = last_two[1];
+        last_two[1] = last_two[0] + three_ago;
     }
 
-    // ISSUE: what about counting the same way twice?
-    // example: n = 4
-    // a: 1 1 1 1
-    // b: 2 1 1
-    // c: 2 2
-    // d: 1 2 1
-    // e: 1 1 2
-    // that would work: 2 ways to reach 2 steps up, then the number of ways from there
-    // no it doesn't: 1 then 2 is a path not considered, and then overlap with 2 then 1
-    return amazon_num_ways(n - 2) + amazon_num_ways(n - 1);
+    last_two.iter().sum()
 }
 
 // Now with an arbitrary list of possible steps at a time
