@@ -1658,54 +1658,43 @@ pub fn build_order_4_7(projects: &Projects) -> Result<Vec<i32>, String> {
 // A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2.
 // That is, if you cut off the tree at node n, the two trees would be identical.
 
-// Step 1: search for T2's root in a BFS on T1
-// Step 2: compare T1's subtree with T2 with either DFS or BFS
+fn first_common_ancestor_4_8_helper_compare(tree_a: &TreeNode<i32>, tree_b: &TreeNode<i32>) -> bool {
+    if tree_a.value != tree_b.value {
+        return false;
+    }
 
-// fn tree_node_bfs<'a>(tree: &'a TreeNode<i32>, to_find: &TreeNode<i32>) -> Option<&'a TreeNode<i32>> {
-//     let mut visited = HashSet::new();
-//     let mut visit_queue = VecDeque::new();
+    for (a, b) in [(tree_a.left.as_ref(), tree_b.left.as_ref()), (tree_a.right.as_ref(), tree_b.right.as_ref())] {
+        if !match (a, b) {
+            (None, None) => true,
+            (None, _) => false,
+            (_, None) => false,
+            (Some(a), Some(b)) => first_common_ancestor_4_8_helper_compare(a.as_ref(), b.as_ref()),
+        } {
+            return false;
+        }
+    }
 
-//     if tree.value == to_find.value {
-//         return Some(tree);
-//     }
+    true
+}
 
-//     visited.insert(tree.value);
-//     visit_queue.push_back(tree);
+pub fn first_common_ancestor_4_8(big_tree: &TreeNode<i32>, small_tree: &TreeNode<i32>) -> bool {
+    let mut queue = VecDeque::new();
+    queue.push_back(big_tree);
 
-//     while let Some(node) = visit_queue.pop_front() {
-//         if node.value == to_find.value {
-//             return Some(node);
-//         }
+    while let Some(node) = queue.pop_front() {
+        if node.value == small_tree.value && first_common_ancestor_4_8_helper_compare(node, small_tree) {
+            return true;
+        }
+        if let Some(left) = node.left.as_ref() {
+            queue.push_back(left.as_ref());
+        }
+        if let Some(right) = node.right.as_ref() {
+            queue.push_back(right.as_ref());
+        }
+    }
 
-//         if visited.insert(node.value) {
-//             for child in [node.left.as_ref(), node.right.as_ref()] {
-//                 if let Some(child) = child {
-//                     visit_queue.push_back(child);
-//                 }
-//             }
-//         }
-//     }
-
-//     None
-// }
-
-// fn first_common_ancestor_4_8_helper_compare(tree_a: &TreeNode<i32>, tree_b: &TreeNode<i32>) -> bool {
-//     if tree_a.value != tree_b.value {
-//         return false;
-//     }
-
-//     match (a_left, b_left, )
-// }
-
-// pub fn first_common_ancestor_4_8(big_tree: &TreeNode<i32>, small_tree: &TreeNode<i32>) -> bool {
-//     let big_tree_contains_root = tree_node_bfs(big_tree, small_tree);
-//     if big_tree_contains_root.is_none() {
-//         return false;
-//     }
-
-//     // Compare both trees with a DFS
-//     first_common_ancestor_4_8_helper_compare(big_tree_contains_root, small_tree)
-// }
+    false
+}
 
 // Problem 4.9: BST Sequences
 // A binary search tree was created by traversing through an array from left to right and inserting each value. Given a binary search tree with distinct elements, print all possible arrays that could have led to this tree.
@@ -3260,5 +3249,98 @@ mod tests {
         };
         let result = build_order_4_7(&projects);
         assert_eq!(result, Ok(vec![]));
+    }
+
+    #[test]
+    fn test_first_common_ancestor_4_8() {
+        // Helper to build a tree from nested tuples: (value, left, right)
+        fn build_tree(data: Option<(i32, Option<Box<TreeNode<i32>>>, Option<Box<TreeNode<i32>>>)>) -> Option<Box<TreeNode<i32>>> {
+            data.map(|(v, l, r)| Box::new(TreeNode { value: v, left: l, right: r }))
+        }
+
+        // Tree T1:
+        //        10
+        //      /    \
+        //     5      15
+        //    / \    /  \
+        //   3   7  12  18
+        //      /
+        //     6
+        let t1 = TreeNode {
+            value: 10,
+            left: build_tree(Some((
+                5,
+                build_tree(Some((3, None, None))),
+                build_tree(Some((
+                    7,
+                    build_tree(Some((6, None, None))),
+                    None,
+                ))),
+            ))),
+            right: build_tree(Some((
+                15,
+                build_tree(Some((12, None, None))),
+                build_tree(Some((18, None, None))),
+            ))),
+        };
+
+        // T2 is a subtree of T1 (matches the left subtree rooted at 5)
+        let t2 = TreeNode {
+            value: 5,
+            left: build_tree(Some((3, None, None))),
+            right: build_tree(Some((
+                7,
+                build_tree(Some((6, None, None))),
+                None,
+            ))),
+        };
+        assert!(first_common_ancestor_4_8(&t1, &t2));
+
+        // T3 is not a subtree of T1 (structure doesn't match)
+        let t3 = TreeNode {
+            value: 5,
+            left: build_tree(Some((3, None, None))),
+            right: build_tree(Some((
+                7,
+                None,
+                build_tree(Some((6, None, None))),
+            ))),
+        };
+        assert!(!first_common_ancestor_4_8(&t1, &t3));
+
+        // T4 is a single node that exists in T1
+        let t4 = TreeNode::new(12);
+        assert!(first_common_ancestor_4_8(&t1, &t4));
+
+        // T5 is a single node that does not exist in T1
+        let t5 = TreeNode::new(99);
+        assert!(!first_common_ancestor_4_8(&t1, &t5));
+
+        // T6 is the whole tree T1 (should be a subtree of itself)
+        assert!(first_common_ancestor_4_8(&t1, &t1));
+
+        // T7 is a subtree rooted at 7 with left child 6
+        let t7 = TreeNode {
+            value: 7,
+            left: build_tree(Some((6, None, None))),
+            right: None,
+        };
+        assert!(first_common_ancestor_4_8(&t1, &t7));
+
+        // T8 is a subtree rooted at 15 with only right child 18
+        let t8 = TreeNode {
+            value: 15,
+            left: None,
+            right: build_tree(Some((18, None, None))),
+        };
+        assert!(!first_common_ancestor_4_8(&t1, &t8)); // structure doesn't match (missing left child 12)
+
+        // T9 is a subtree rooted at 15 with both children
+        let t9 = TreeNode {
+            value: 15,
+            left: build_tree(Some((12, None, None))),
+            right: build_tree(Some((18, None, None))),
+        };
+        assert!(first_common_ancestor_4_8(&t1, &t9));
     }
 }
