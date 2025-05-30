@@ -167,6 +167,51 @@ pub fn heapsort(input: &mut [i32]) {
     }
 }
 
+// Amazon coding example: num ways
+// Give a number of steps N, and knowing that one can only go up 1 or 2 steps at a time, return the number of ways one can climb the stairs
+
+// Idea: recursive solution
+pub fn amazon_num_ways(n: usize) -> usize {
+    if n <= 1 {
+        return 1;
+    }
+
+    if n == 2 {
+        return 2;
+    }
+
+    // ISSUE: what about counting the same way twice?
+    // example: n = 4
+    // a: 1 1 1 1
+    // b: 2 1 1
+    // c: 2 2
+    // d: 1 2 1
+    // e: 1 1 2
+    // that would work: 2 ways to reach 2 steps up, then the number of ways from there
+    // no it doesn't: 1 then 2 is a path not considered, and then overlap with 2 then 1
+    return amazon_num_ways(n - 2) + amazon_num_ways(n - 1);
+}
+
+// Now with an arbitrary list of possible steps at a time
+pub fn amazon_num_ways_any_steps(n: usize, steps: &Vec<usize>) -> usize {
+    // Assumption: steps is sorted, we could sort it otherwise
+    if n < steps[0] {
+        return 0;
+    }
+
+    let previous_stop = | step: &usize | {
+        amazon_num_ways_any_steps(n.saturating_sub(*step), steps)
+    };
+
+    for i in 0..steps.len() {
+        if n == steps[i] {
+            return 1 + steps.iter().map(previous_stop).sum::<usize>();
+        }
+    }
+
+    steps.iter().map(previous_stop).sum()
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -1546,9 +1591,6 @@ pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCel
 //    dependencies: (a, d), (f, b), (b, d), (f, a), (d, c)
 // Output: f, e, a, b, d, c
 
-// Brainstorm: I guess we find the root, remove it, and repeat?
-// No valid build would mean a loop, so we need loop detection as well.
-// Ugh...
 #[derive(Debug)]
 pub struct Projects {
     projects: Vec<i32>,
@@ -1611,7 +1653,59 @@ pub fn build_order_4_7(projects: &Projects) -> Result<Vec<i32>, String> {
 }
 
 // Problem 4.8: First Common Ancestor
-// You have two very large binary trees: T1, with millions of nodes, and T2, with hundreds of nodes. Create an algorithm to determine if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
+// You have two very large binary trees: T1, with millions of nodes, and T2, with hundreds of nodes.
+// Create an algorithm to determine if T2 is a subtree of T1.
+// A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2.
+// That is, if you cut off the tree at node n, the two trees would be identical.
+
+// Step 1: search for T2's root in a BFS on T1
+// Step 2: compare T1's subtree with T2 with either DFS or BFS
+
+// fn tree_node_bfs<'a>(tree: &'a TreeNode<i32>, to_find: &TreeNode<i32>) -> Option<&'a TreeNode<i32>> {
+//     let mut visited = HashSet::new();
+//     let mut visit_queue = VecDeque::new();
+
+//     if tree.value == to_find.value {
+//         return Some(tree);
+//     }
+
+//     visited.insert(tree.value);
+//     visit_queue.push_back(tree);
+
+//     while let Some(node) = visit_queue.pop_front() {
+//         if node.value == to_find.value {
+//             return Some(node);
+//         }
+
+//         if visited.insert(node.value) {
+//             for child in [node.left.as_ref(), node.right.as_ref()] {
+//                 if let Some(child) = child {
+//                     visit_queue.push_back(child);
+//                 }
+//             }
+//         }
+//     }
+
+//     None
+// }
+
+// fn first_common_ancestor_4_8_helper_compare(tree_a: &TreeNode<i32>, tree_b: &TreeNode<i32>) -> bool {
+//     if tree_a.value != tree_b.value {
+//         return false;
+//     }
+
+//     match (a_left, b_left, )
+// }
+
+// pub fn first_common_ancestor_4_8(big_tree: &TreeNode<i32>, small_tree: &TreeNode<i32>) -> bool {
+//     let big_tree_contains_root = tree_node_bfs(big_tree, small_tree);
+//     if big_tree_contains_root.is_none() {
+//         return false;
+//     }
+
+//     // Compare both trees with a DFS
+//     first_common_ancestor_4_8_helper_compare(big_tree_contains_root, small_tree)
+// }
 
 // Problem 4.9: BST Sequences
 // A binary search tree was created by traversing through an array from left to right and inserting each value. Given a binary search tree with distinct elements, print all possible arrays that could have led to this tree.
@@ -1682,6 +1776,97 @@ mod tests {
         test_sort(mergesort_bottomup);
         test_sort(mergesort_topdown);
         test_sort(heapsort);
+    }
+
+    #[test]
+    fn test_amazon_num_ways() {
+        // Base cases
+        assert_eq!(amazon_num_ways(0), 1);
+        assert_eq!(amazon_num_ways(1), 1);
+        assert_eq!(amazon_num_ways(2), 2);
+
+        // Small numbers
+        assert_eq!(amazon_num_ways(3), 3); // 1+1+1, 1+2, 2+1
+        assert_eq!(amazon_num_ways(4), 5); // 1+1+1+1, 1+1+2, 1+2+1, 2+1+1, 2+2
+
+        // Larger numbers
+        assert_eq!(amazon_num_ways(5), 8);
+        assert_eq!(amazon_num_ways(6), 13);
+
+        // Test a larger value
+        assert_eq!(amazon_num_ways(10), 89);
+
+        // Test a reasonably large value (should not panic or overflow)
+        let _ = amazon_num_ways(20);
+    }
+
+    #[test]
+    fn test_amazon_num_ways_any_steps() {
+        // Steps: [1, 2]
+        let steps = vec![1, 2];
+        assert_eq!(amazon_num_ways_any_steps(0, &steps), 0); // n < steps[0]
+        assert_eq!(amazon_num_ways_any_steps(1, &steps), 1); // Only one way: 1
+        assert_eq!(amazon_num_ways_any_steps(2, &steps), 2); // 1+1, 2
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 3); // 1+1+1, 1+2, 2+1
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 5); // 1+1+1+1, 1+1+2, 1+2+1, 2+1+1, 2+2
+
+        // Steps: [2, 3]
+        let steps = vec![2, 3];
+        assert_eq!(amazon_num_ways_any_steps(1, &steps), 0); // n < steps[0]
+        assert_eq!(amazon_num_ways_any_steps(2, &steps), 1); // Only one way: 2
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 1); // Only one way: 3
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 1); // 2+2
+        assert_eq!(amazon_num_ways_any_steps(5, &steps), 2); // 2+3, 3+2
+
+        // Steps: [1, 3, 5]
+        let steps = vec![1, 3, 5];
+        assert_eq!(amazon_num_ways_any_steps(0, &steps), 0);
+        assert_eq!(amazon_num_ways_any_steps(1, &steps), 1);
+        assert_eq!(amazon_num_ways_any_steps(2, &steps), 1); // 1+1
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 2); // 1+1+1, 3
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 3); // 1+1+1+1, 1+3, 3+1
+        assert_eq!(amazon_num_ways_any_steps(5, &steps), 5); // 1+1+1+1+1, 1+1+3, 1+3+1, 3+1+1, 5
+
+        // Steps: [2]
+        let steps = vec![2];
+        assert_eq!(amazon_num_ways_any_steps(1, &steps), 0);
+        assert_eq!(amazon_num_ways_any_steps(2, &steps), 1);
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 0);
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 1); // 2+2
+
+        // Steps: [1]
+        let steps = vec![1];
+        assert_eq!(amazon_num_ways_any_steps(0, &steps), 0);
+        assert_eq!(amazon_num_ways_any_steps(1, &steps), 1);
+        assert_eq!(amazon_num_ways_any_steps(2, &steps), 1);
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 1);
+
+        // Steps: [1, 2, 3]
+        let steps = vec![1, 2, 3];
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 7); // 1+1+1+1, 1+1+2, 1+2+1, 2+1+1, 2+2, 1+3, 3+1
+
+        // Steps: [2, 4]
+        let steps = vec![2, 4];
+        assert_eq!(amazon_num_ways_any_steps(3, &steps), 0); // can't reach 3
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 2); // 2+2, 4
+
+        // Steps: [5, 10]
+        let steps = vec![5, 10];
+        assert_eq!(amazon_num_ways_any_steps(4, &steps), 0);
+        assert_eq!(amazon_num_ways_any_steps(5, &steps), 1);
+        assert_eq!(amazon_num_ways_any_steps(10, &steps), 2); // 5+5, 10
+
+        // Steps: [1, 2], n = 20 (stress test)
+        let steps = vec![1, 2];
+        let _ = amazon_num_ways_any_steps(20, &steps);
+
+        // Steps: [1, 2, 3, 4, 5], n = 10 (stress test)
+        let steps = vec![1, 2, 3, 4, 5];
+        let _ = amazon_num_ways_any_steps(10, &steps);
+
+        // Steps: [3, 5, 7], n = 0 (edge case)
+        let steps = vec![3, 5, 7];
+        assert_eq!(amazon_num_ways_any_steps(0, &steps), 0);
     }
 
     #[test]
