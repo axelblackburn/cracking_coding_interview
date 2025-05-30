@@ -124,6 +124,7 @@ pub fn mergesort_bottomup(input: &mut [i32]) {
 }
 
 // Heap sort
+
 fn heapsort_helper_heapify(input: &mut [i32]) {
     let len = input.len();
     if len <= 1 {
@@ -1534,7 +1535,11 @@ pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCel
 }
 
 // Problem 4.7: Build Order
-// You are given a list of projects and a list of dependencies (which is a list of pairs of projects, where the second project is dependent on the first project). All of a project's dependencies must be built before the project is. Find a build order that will allow the projects to be built. If there is no valid build order, return an error.
+// You are given a list of projects and a list of dependencies
+// (which is a list of pairs of projects, where the second project is dependent on the first project).
+// All of a project's dependencies must be built before the project is.
+// Find a build order that will allow the projects to be built.
+// If there is no valid build order, return an error.
 // Example:
 // Input:
 //    projects: a, b, c, d, e, f
@@ -1544,6 +1549,66 @@ pub fn find_next_node_4_6(node: Rc<RefCell<LinkedTreeNode>>) -> Option<Rc<RefCel
 // Brainstorm: I guess we find the root, remove it, and repeat?
 // No valid build would mean a loop, so we need loop detection as well.
 // Ugh...
+#[derive(Debug)]
+pub struct Projects {
+    projects: Vec<i32>,
+    dependencies: Vec<[i32; 2]>,
+}
+
+pub fn build_order_4_7(projects: &Projects) -> Result<Vec<i32>, String> {
+    // Translate to Graph
+    let mut graph: Graph = Graph::new();
+    for dependency in &projects.dependencies {
+        graph.add_edge(dependency[0], dependency[1]);
+    }
+
+    // In case there are projects without an dependency
+    let mut in_degrees = HashMap::new();
+    for project in &projects.projects {
+        if !graph.adjacency_list.contains_key(&project) {
+            graph.adjacency_list.insert(project.clone(), Vec::new());
+        }
+        in_degrees.insert(*project, 0);
+    }
+
+    // Step one: count dependencies for each project
+    for dependencies in graph.adjacency_list.values() {
+        for dependency in dependencies {
+            in_degrees.entry(*dependency).and_modify(|value| *value += 1);
+        }
+    }
+
+    // Step two: while there are projects at 0, remove them and decrease their dependencies
+    let mut ordered_projects = Vec::new();
+    while in_degrees.len() > 0 {
+        let mut projects_to_be_removed = Vec::new();
+        let mut in_degrees_to_decrease = Vec::new();
+        for (project, in_degree) in &in_degrees {
+            if *in_degree == 0 {
+                projects_to_be_removed.push(*project);
+                ordered_projects.push(*project);
+
+                for dependency in graph.adjacency_list.get(&project).unwrap() {
+                    in_degrees_to_decrease.push(dependency);
+                }
+            }
+        }
+
+        if projects_to_be_removed.is_empty() {
+            return Err("Dependency cycle was detected!".to_string());
+        }
+
+        for in_degree_to_decrease in in_degrees_to_decrease {
+            in_degrees.entry(*in_degree_to_decrease).and_modify(|value| *value -= 1);
+        }
+
+        for project in projects_to_be_removed {
+            in_degrees.remove(&project);
+        }
+    }
+
+    Ok(ordered_projects)
+}
 
 // Problem 4.8: First Common Ancestor
 // You have two very large binary trees: T1, with millions of nodes, and T2, with hundreds of nodes. Create an algorithm to determine if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
@@ -2890,5 +2955,125 @@ mod tests {
         // 9. Node that is a right child that needs to go up twice: 33 -> 35
         let node_33 = find_node(&Some(root.clone()), 33).unwrap();
         assert!(find_next_node_4_6(node_33.clone()).map(|n| n.borrow().value) == Some(35));
+    }
+
+    #[test]
+    fn test_build_order_4_7_basic() {
+        // Example from the problem statement
+        let projects = Projects {
+            projects: vec![1, 2, 3, 4, 5, 6],
+            dependencies: vec![[1, 4], [6, 2], [2, 4], [6, 1], [4, 3]],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        // The only requirement is that dependencies come before dependents
+        let pos = |x| order.iter().position(|&y| y == x).unwrap();
+        assert!(pos(6) < pos(2));
+        assert!(pos(6) < pos(1));
+        assert!(pos(1) < pos(4));
+        assert!(pos(2) < pos(4));
+        assert!(pos(4) < pos(3));
+        // All projects included
+        for p in &projects.projects {
+            assert!(order.contains(p));
+        }
+    }
+
+    #[test]
+    fn test_build_order_4_7_no_dependencies() {
+        let projects = Projects {
+            projects: vec![1, 2, 3],
+            dependencies: vec![],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        // Any order is valid
+        assert_eq!(order.len(), 3);
+        for p in &projects.projects {
+            assert!(order.contains(p));
+        }
+    }
+
+    #[test]
+    fn test_build_order_4_7_single_project() {
+        let projects = Projects {
+            projects: vec![42],
+            dependencies: vec![],
+        };
+        let result = build_order_4_7(&projects);
+        assert_eq!(result, Ok(vec![42]));
+    }
+
+    #[test]
+    fn test_build_order_4_7_linear_dependencies() {
+        // 1 -> 2 -> 3 -> 4
+        let projects = Projects {
+            projects: vec![1, 2, 3, 4],
+            dependencies: vec![[1, 2], [2, 3], [3, 4]],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        let pos = |x| order.iter().position(|&y| y == x).unwrap();
+        assert!(pos(1) < pos(2));
+        assert!(pos(2) < pos(3));
+        assert!(pos(3) < pos(4));
+    }
+
+    #[test]
+    fn test_build_order_4_7_multiple_roots() {
+        // 1 -> 3, 2 -> 3, 4 (no dependencies)
+        let projects = Projects {
+            projects: vec![1, 2, 3, 4],
+            dependencies: vec![[1, 3], [2, 3]],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        let pos = |x| order.iter().position(|&y| y == x).unwrap();
+        assert!(pos(1) < pos(3));
+        assert!(pos(2) < pos(3));
+        // 4 can be anywhere
+        assert!(order.contains(&4));
+    }
+
+    #[test]
+    fn test_build_order_4_7_cycle() {
+        // 1 -> 2 -> 3 -> 1 (cycle)
+        let projects = Projects {
+            projects: vec![1, 2, 3],
+            dependencies: vec![[1, 2], [2, 3], [3, 1]],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_err());
+        assert_eq!(result.unwrap_err(), "Dependency cycle was detected!".to_string());
+    }
+
+    #[test]
+    fn test_build_order_4_7_disconnected_graph() {
+        // 1 -> 2, 3 (no dependencies), 4 -> 5
+        let projects = Projects {
+            projects: vec![1, 2, 3, 4, 5],
+            dependencies: vec![[1, 2], [4, 5]],
+        };
+        let result = build_order_4_7(&projects);
+        assert!(result.is_ok());
+        let order = result.unwrap();
+        let pos = |x| order.iter().position(|&y| y == x).unwrap();
+        assert!(pos(1) < pos(2));
+        assert!(pos(4) < pos(5));
+        assert!(order.contains(&3));
+    }
+
+    #[test]
+    fn test_build_order_4_7_empty_projects() {
+        let projects = Projects {
+            projects: vec![],
+            dependencies: vec![],
+        };
+        let result = build_order_4_7(&projects);
+        assert_eq!(result, Ok(vec![]));
     }
 }
