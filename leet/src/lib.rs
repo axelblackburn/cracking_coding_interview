@@ -196,17 +196,32 @@ pub fn amazon_num_ways_any_steps(n: usize, steps: &Vec<usize>) -> usize {
         return 0;
     }
 
-    let previous_stop = | step: &usize | {
-        amazon_num_ways_any_steps(n.saturating_sub(*step), steps)
-    };
+    // Iterative solution saves space but is highly ineficient
+    // let previous_stop = | step: &usize | {
+    //     amazon_num_ways_any_steps(n.saturating_sub(*step), steps)
+    // };
 
-    for i in 0..steps.len() {
-        if n == steps[i] {
-            return 1 + steps.iter().map(previous_stop).sum::<usize>();
+    // for i in 0..steps.len() {
+    //     if n == steps[i] {
+    //         return 1 + steps.iter().map(previous_stop).sum::<usize>();
+    //     }
+    // }
+
+    // steps.iter().map(previous_stop).sum()
+    let mut results = vec![0; n+1];
+    // Assume that there is always a way, unlike the recursive solution above
+    results[0] = 1;
+    for i in 1..=n {
+        let mut total = 0;
+        for j in steps {
+            if i >= *j {
+                total += results[i - j];
+            }
         }
+        results[i] = total;
     }
 
-    steps.iter().map(previous_stop).sum()
+    results[n]
 }
 
 // Problem 1.1: Is Unique
