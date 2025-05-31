@@ -1868,6 +1868,31 @@ mod tests {
         // Steps: [3, 5, 7], n = 0 (edge case)
         let steps = vec![3, 5, 7];
         assert_eq!(amazon_num_ways_any_steps(0, &steps), 0);
+
+        // Stress test: large n and steps
+        let steps = vec![1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        let n = 30;
+        let _ = amazon_num_ways_any_steps(n, &steps);
+
+        // Stress test: very large n with minimal steps
+        let steps = vec![1, 2];
+        let n = 35;
+        let _ = amazon_num_ways_any_steps(n, &steps);
+
+        // Stress test: large steps, small n
+        let steps = (1..=100).collect::<Vec<_>>();
+        let n = 10;
+        let _ = amazon_num_ways_any_steps(n, &steps);
+
+        // Stress test: large steps and large n
+        let steps = (1..=20).collect::<Vec<_>>();
+        let n = 25;
+        let _ = amazon_num_ways_any_steps(n, &steps);
+
+        // Stress test: n much smaller than smallest step
+        let steps = vec![100, 200, 300];
+        let n = 50;
+        let _ = amazon_num_ways_any_steps(n, &steps);
     }
 
     #[test]
