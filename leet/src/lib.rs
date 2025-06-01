@@ -242,6 +242,43 @@ pub fn daily_easy_2025_06_01(list: &[i32], k: i32) -> bool {
     false
 }
 
+// Daily Coding Problem 2025/06/01 HARD
+// Given an array of integers, return a new array such that
+// each element at index i of the new array is the product of
+// all the numbers in the original array except the one at i.
+// For example, if our input was [1, 2, 3, 4, 5], the expected output would be
+// [120, 60, 40, 30, 24]. If our input was [3, 2, 1], the expected output would be [2, 3, 6].
+// Follow-up: what if you can't use division?
+
+pub fn daily_hard_2025_06_01(list: &[i32]) -> Vec<i32> {
+    // With division: compute the total product then divide each element when constructing the new array
+    let mut total_multiplication = 1;
+    // Assumption: no 0 element
+    list.iter().for_each(|n| total_multiplication *= n);
+    let mut result = vec![0; list.len()];
+    for i in 0..list.len() {
+        result[i] = total_multiplication / list[i];
+    }
+    result
+}
+
+pub fn daily_hard_2025_06_01_no_div(list: &[i32]) -> Vec<i32> {
+    let mut result = vec![1; list.len()];
+    let mut multiplier = 1;
+    for i in 0..list.len() {
+        result[i] = multiplier;
+        multiplier *= list[i];
+    }
+
+    let mut multiplier = 1;
+    for i in (0..list.len()).rev() {
+        result[i] *= multiplier;
+        multiplier *= list[i];
+    }
+
+    result
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -1942,6 +1979,55 @@ mod tests {
     fn test_daily_easy_2025_06_01() {
         let result = daily_easy_2025_06_01(&[10, 15, 3, 7], 17);
         assert!(result);
+    }
+
+    #[test]
+    fn test_daily_hard_2025_06_01() {
+        for fun in [daily_hard_2025_06_01, daily_hard_2025_06_01_no_div] {
+            // Standard cases
+            let list = vec![1, 2, 3, 4, 5];
+            let expected = vec![120, 60, 40, 30, 24];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+
+            let list = vec![3, 2, 1];
+            let expected = vec![2, 3, 6];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+
+            // Corner cases
+            // Single element
+            let list = vec![42];
+            let expected = vec![1];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+
+            // Two elements
+            let list = vec![2, 3];
+            let expected = vec![3, 2];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+
+            // Contains zero (for division version, this will panic or be incorrect, but for no-div version, should be zero everywhere except at the zero's index)
+            let list = vec![1, 0, 3, 4];
+            // For division version, skip this test (would panic or be incorrect)
+            if fun as usize == daily_hard_2025_06_01_no_div as usize {
+                let result = fun(&list);
+                assert_eq!(result, vec![0, 12, 0, 0]);
+            }
+
+            // All ones
+            let list = vec![1, 1, 1, 1];
+            let expected = vec![1, 1, 1, 1];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+
+            // Empty list
+            let list: Vec<i32> = vec![];
+            let expected: Vec<i32> = vec![];
+            let result = fun(&list);
+            assert_eq!(expected, result);
+        }
     }
 
     #[test]
