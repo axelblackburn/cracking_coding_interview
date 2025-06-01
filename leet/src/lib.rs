@@ -224,6 +224,24 @@ pub fn amazon_num_ways_any_steps(n: usize, steps: &Vec<usize>) -> usize {
     results[n]
 }
 
+// Daily Coding Problem 2025/06/01 EASY
+// Given a list of numbers and a number k, return whether any two numbers from the list add up to k.
+// For example, given [10, 15, 3, 7] and k of 17, return true since 10 + 7 is 17.
+// Bonus: Can you do this in one pass?
+
+pub fn daily_easy_2025_06_01(list: &[i32], k: i32) -> bool {
+    // One pass: create a HashSet of k-n for each n encountered
+    let mut k_minus_i_set = HashSet::new();
+    for n in list {
+        if k_minus_i_set.contains(n) {
+            return true;
+        }
+        k_minus_i_set.insert(k - n);
+    }
+
+    false
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -1746,13 +1764,11 @@ pub fn first_common_ancestor_4_8(big_tree: &TreeNode<i32>, small_tree: &TreeNode
 // Output: N = 10001001100
 
 pub fn insertion_5_1(n: i32, m: i32, i: u8, j: u8) -> i32 {
-    let mut m_mask: i32 = 0;
-    for _ in 0..j-i {
-        m_mask = (m_mask.rotate_left(1)) | 1;
-    }
-    m_mask = m_mask.rotate_left(i as u32);
+    let left: u32 = !0 << (j + 1);
+    let right: u32 = (1 << i) - 1;
+    let m_mask = left | right;
 
-    (n & !m_mask) | (m.rotate_left(i as u32))
+    ((n as u32 & m_mask) | ((m as u32) << i)) as i32
 }
 
 #[cfg(test)]
@@ -1920,6 +1936,12 @@ mod tests {
         let steps = vec![100, 200, 300];
         let n = 50;
         let _ = amazon_num_ways_any_steps(n, &steps);
+    }
+
+    #[test]
+    fn test_daily_easy_2025_06_01() {
+        let result = daily_easy_2025_06_01(&[10, 15, 3, 7], 17);
+        assert!(result);
     }
 
     #[test]
@@ -3412,11 +3434,11 @@ mod tests {
     fn test_insertion_5_1() {
         let n: i32 = -1;
         let m: i32 = 0b0100;
-        let result = insertion_5_1(n, m, 4, 8);
+        let result = insertion_5_1(n, m, 4, 7);
         let expected: i32 = 0b1111_1111_1111_1111_1111_1111_0100_1111u32 as i32;
         assert_eq!(expected, result);
 
-        let n = 0b100_0000_0000;
+        let n = 0b100_0010_0000;
         let m = 0b10011;
         let result = insertion_5_1(n, m, 2, 6);
         let expected = 0b100_0100_1100;
