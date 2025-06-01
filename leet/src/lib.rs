@@ -1718,15 +1718,42 @@ pub fn first_common_ancestor_4_8(big_tree: &TreeNode<i32>, small_tree: &TreeNode
 // Output:
 //    [2, 1, 3], [2, 3, 1]
 
+// TODO
+
 // Problem 4.10: Check Subtree
 // T1 and T2 are two very large binary trees, with T1 much bigger than T2. Create an algorithm to check if T2 is a subtree of T1. A tree T2 is a subtree of T1 if there exists a node n in T1 such that the subtree of n is identical to T2. That is, if you cut off the tree at node n, the two trees would be identical.
+
+// TODO
 
 // Problem 4.11: Random Node
 // You are implementing a binary tree from scratch which, in addition to insert, find, and delete, has a method getRandomNode() which returns a random node. All nodes should be equally likely to be chosen. Design and implement an algorithm for this. You can use a standard binary tree or binary search tree data structure.
 // Extra: You may not use any extra space.
 
+// TODO
+
 // Problem 4.12: Paths with Sum
 // You are given a binary tree in which each node contains an integer value (which might be positive or negative). Design an algorithm to count the number of paths that sum to a given value. The path does not need to start or end at the root or a leaf, but it must go downwards (traveling only from parent nodes to child nodes).
+
+// TODO
+
+// Problem 5.1: Insertion
+// You are given two 32-bit numbers, N and M, and two bit positions i and j.
+// Write a method to insert M into N such that M starts at bit j and ends at bit i.
+// You can assume that the bits j through i have enough space to fit all of M.
+// That is, if M = 10011, you can assume that there are at least 5 bits between j and i.
+// Example:
+// Input: N = 10000000000, M = 10011, i = 2, j = 6
+// Output: N = 10001001100
+
+pub fn insertion_5_1(n: i32, m: i32, i: u8, j: u8) -> i32 {
+    let mut m_mask: i32 = 0;
+    for _ in 0..j-i {
+        m_mask = (m_mask.rotate_left(1)) | 1;
+    }
+    m_mask = m_mask.rotate_left(i as u32);
+
+    (n & !m_mask) | (m.rotate_left(i as u32))
+}
 
 #[cfg(test)]
 mod tests {
@@ -3379,5 +3406,20 @@ mod tests {
             right: build_tree(Some((18, None, None))),
         };
         assert!(first_common_ancestor_4_8(&t1, &t9));
+    }
+
+    #[test]
+    fn test_insertion_5_1() {
+        let n: i32 = -1;
+        let m: i32 = 0b0100;
+        let result = insertion_5_1(n, m, 4, 8);
+        let expected: i32 = 0b1111_1111_1111_1111_1111_1111_0100_1111u32 as i32;
+        assert_eq!(expected, result);
+
+        let n = 0b100_0000_0000;
+        let m = 0b10011;
+        let result = insertion_5_1(n, m, 2, 6);
+        let expected = 0b100_0100_1100;
+        assert_eq!(expected, result);
     }
 }
