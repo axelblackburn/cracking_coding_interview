@@ -1,5 +1,7 @@
 use rand::Rng;
 use std::cell::RefCell;
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
 use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::LinkedList;
@@ -274,6 +276,70 @@ pub fn daily_hard_2025_06_01_no_div(list: &[i32]) -> Vec<i32> {
     for i in (0..list.len()).rev() {
         result[i] *= multiplier;
         multiplier *= list[i];
+    }
+
+    result
+}
+
+// Daily Coding Problem 2025/06/01 HARD explained
+// Return a new sorted merged list from K sorted lists, each with size N
+
+pub fn daily_harder_2025_06_01_nk(lists: &[Vec<i32>]) -> Vec<i32> {
+    if lists.len() == 0 {
+        return Vec::new();
+    }
+
+    // Merge sort idea: have 1 index per list and merge
+    let n = lists[0].len();
+    let mut result = Vec::with_capacity(n * lists.len());
+    let mut indexes = vec![0; lists.len()];
+
+    while result.len() < n * lists.len() {
+        // Pick the index to increment by comparing its element with all the others'
+        let mut min: Option<i32> = None;
+        let mut min_index: Option<usize> = None;
+
+        for i in 0..indexes.len() {
+            let index = indexes[i];
+            if index < n {
+                if min_index.is_none() || lists[i][index] < min.unwrap() {
+                    min = Some(lists[i][index]);
+                    min_index = Some(i);
+                }
+            }
+        }
+
+        if let (Some(val), Some(i)) = (min, min_index) {
+            result.push(val);
+            indexes[i] += 1;
+        }
+    }
+
+    result
+}
+
+pub fn daily_harder_2025_06_01_heapmin(lists: &[Vec<i32>]) -> Vec<i32> {
+    if lists.is_empty() {
+        return Vec::new();
+    }
+
+    let mut heap = BinaryHeap::new();
+    let mut indexes = vec![0; lists.len()];
+    let n = lists[0].len();
+    let mut result = Vec::with_capacity(n * lists.len());
+
+    for i in 0..lists.len() {
+        heap.push((Reverse(lists[i][0]), i));
+    }
+
+    while result.len() < n * lists.len() {
+        if let Some((value, i)) = heap.pop() {
+            result.push(value.0);
+            indexes[i] += 1;
+            if indexes[i] < n {
+                heap.push((Reverse(lists[i][indexes[i]]), i));
+            }
+        }
     }
 
     result
@@ -2027,6 +2093,46 @@ mod tests {
             let expected: Vec<i32> = vec![];
             let result = fun(&list);
             assert_eq!(expected, result);
+        }
+    }
+
+    #[test]
+    fn test_daily_harder_2025_06_01() {
+        for fun in [daily_harder_2025_06_01_nk, daily_harder_2025_06_01_heapmin] {
+            // 2 lists, each sorted, size 3
+            let lists = vec![
+                vec![1, 4, 7],
+                vec![2, 5, 8],
+                vec![3, 6, 9],
+            ];
+            let result = fun(&lists);
+            assert_eq!(result, vec![1,2,3,4,5,6,7,8,9]);
+
+            let lists = vec![vec![0; 0]; 0];
+            let result = fun(&lists);
+            assert_eq!(result, vec![]);
+
+            let lists = [
+                vec![1, 2, 3, 4, 5],
+            ];
+            let result = fun(&lists);
+            assert_eq!(result, vec![1,2,3,4,5]);
+
+            let lists = [
+                vec![1, 2, 2],
+                vec![2, 3, 4],
+                vec![2, 2, 5],
+            ];
+            let result = fun(&lists);
+            assert_eq!(result, vec![1,2,2,2,2,2,3,4,5]);
+
+            let lists = [
+                vec![-10, -5, 0],
+                vec![-7, -3, 2],
+                vec![-8, -2, 1],
+            ];
+            let result = fun(&lists);
+            assert_eq!(result, vec![-10, -8, -7, -5, -3, -2, 0, 1, 2]);
         }
     }
 
