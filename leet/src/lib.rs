@@ -373,37 +373,30 @@ impl BinaryNode {
     }
 }
 
-pub fn serialize_daily_med_2025_06_02(root: &BinaryNode) -> String {
+pub fn serialize_daily_med_2025_06_02(root: &BinaryNode) -> Result<String, String> {
     if root.val.contains('|') || root.val.contains(']') || root.val.contains('[') {
-        panic!("Invalid value");
+        return Err(format!("Invalid value {}", root.val));
     }
     let mut result = String::new();
     result.push_str(&format!("[{}|", &root.val));
     result.push_str(&match (&root.left, &root.right) {
         (None, None) => "|".to_string(),
-        (Some(left), None) => format!("{}|", &serialize_daily_med_2025_06_02(&left)),
-        (None, Some(right)) => format!("|{}", &serialize_daily_med_2025_06_02(&right)),
+        (Some(left), None) => format!("{}|", &serialize_daily_med_2025_06_02(&left)?),
+        (None, Some(right)) => format!("|{}", &serialize_daily_med_2025_06_02(&right)?),
         (Some(left), Some(right)) => {
             format!("{}|{}",
-                &serialize_daily_med_2025_06_02(&left),
-                &serialize_daily_med_2025_06_02(&right))
+                &serialize_daily_med_2025_06_02(&left)?,
+                &serialize_daily_med_2025_06_02(&right)?)
         }
     });
     result.push(']');
 
-    result
+    Ok(result)
 }
 
 pub fn deserialize_daily_med_2025_06_02(text: &str) -> Result<BinaryNode, String> {
     if text.is_empty() {
         return Err("Invalid input string".to_string());
-    }
-
-    let node_entries: Vec<&str> = text.split('[').collect();
-    if node_entries.len() == 2 {
-        // We found a leaf
-        let value = node_entries[1].split('|').collect::<Vec<&str>>()[0];
-        return Ok(BinaryNode { val: value.to_string(), left: None, right: None });
     }
 
     if !text.starts_with("[") || !text.ends_with("]") {
@@ -2238,8 +2231,8 @@ mod tests {
     }
 
     #[test]
-    fn test_serialize_and_deserialize_daily_med_2025_06_02() {
-        // Case 1: Complex tree
+    fn test_serialize_deserialize_daily_med_2025_06_02() {
+        // Base case: full tree
         let node = BinaryNode::new(
             "root",
             Some(Box::new(BinaryNode::new(
@@ -2249,37 +2242,51 @@ mod tests {
             ))),
             Some(Box::new(BinaryNode::new("right", None, None))),
         );
-        let serialized = serialize_daily_med_2025_06_02(&node);
-        println!("{serialized}");
-        let deserialized = deserialize_daily_med_2025_06_02(&serialized).expect("Deserialization failed");
+
+        let serialized = serialize_daily_med_2025_06_02(&node)
+            .expect("Serialization failed");
+        let deserialized = deserialize_daily_med_2025_06_02(&serialized)
+            .expect("Deserialization failed");
+
         assert_eq!(deserialized.left.as_ref().unwrap().left.as_ref().unwrap().val, "left.left");
 
-        // Case 2: Empty string input
-        let result = deserialize_daily_med_2025_06_02("");
-        assert!(result.is_err());
-
-        // Case 3: Single-node tree
-        let solo = BinaryNode::new("solo", None, None);
-        let serialized = serialize_daily_med_2025_06_02(&solo);
+        // Leaf-only node
+        let node = BinaryNode::new("leaf", None, None);
+        let serialized = serialize_daily_med_2025_06_02(&node).unwrap();
         let deserialized = deserialize_daily_med_2025_06_02(&serialized).unwrap();
-        assert_eq!(deserialized.val, "solo");
+        assert_eq!(deserialized.val, "leaf");
         assert!(deserialized.left.is_none());
         assert!(deserialized.right.is_none());
 
-        // Case 4: Left-heavy unbalanced tree
-        let unbalanced = BinaryNode::new(
-            "top",
-            Some(Box::new(BinaryNode::new(
-                "mid",
-                Some(Box::new(BinaryNode::new("bottom", None, None))),
-                None,
-            ))),
+        // Only left subtree
+        let node = BinaryNode::new(
+            "root",
+            Some(Box::new(BinaryNode::new("left", None, None))),
             None,
         );
-        let serialized = serialize_daily_med_2025_06_02(&unbalanced);
+        let serialized = serialize_daily_med_2025_06_02(&node).unwrap();
         let deserialized = deserialize_daily_med_2025_06_02(&serialized).unwrap();
-        assert_eq!(deserialized.left.as_ref().unwrap().left.as_ref().unwrap().val, "bottom");
+        assert_eq!(deserialized.left.as_ref().unwrap().val, "left");
         assert!(deserialized.right.is_none());
+
+        // Only right subtree
+        let node = BinaryNode::new(
+            "root",
+            None,
+            Some(Box::new(BinaryNode::new("right", None, None))),
+        );
+        let serialized = serialize_daily_med_2025_06_02(&node).unwrap();
+        let deserialized = deserialize_daily_med_2025_06_02(&serialized).unwrap();
+        assert_eq!(deserialized.right.as_ref().unwrap().val, "right");
+        assert!(deserialized.left.is_none());
+
+        // Invalid character in value
+        let node = BinaryNode::new("bad|value", None, None);
+        assert!(serialize_daily_med_2025_06_02(&node).is_err());
+
+        // Invalid deserialization
+        assert!(deserialize_daily_med_2025_06_02("[unclosed|node").is_err());
+        assert!(deserialize_daily_med_2025_06_02("just text").is_err());
     }
 
     #[test]
