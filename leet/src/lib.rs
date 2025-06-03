@@ -439,6 +439,17 @@ pub fn deserialize_daily_med_2025_06_02(text: &str) -> Result<BinaryNode, String
     Ok(BinaryNode::new(value, left, right))
 }
 
+// Daily Hard 2025/06/03
+// Given an array of integers, find the first missing positive integer in linear time and constant space.
+// In other words, find the lowest positive integer that does not exist in the array.
+// The array can contain duplicates and negative numbers as well.
+// For example, the input [3, 4, -1, 1] should give 2. The input [1, 2, 0] should give 3.
+// You can modify the input array in-place.
+
+// TODO
+
+// https://www.reddit.com/r/cscareerquestions/comments/apu3ni/a_list_of_questions_i_was_asked_at_top_tech/
+
 // Given a string s, find the first non-repeating character in it and return its index. If it does not exist, return -1.
 pub fn first_non_repeating(s: &str) -> isize {
     struct Value {
@@ -464,6 +475,38 @@ pub fn first_non_repeating(s: &str) -> isize {
 
     result
 }
+
+// Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
+
+// TODO
+
+// Meta phone screen 2025/06/03
+
+// Given a list and a window size, return a list of the median value (sort & middle) of each window.
+// If 2 middle value, use its average
+pub fn median_list_meta_phone_2025_06_03(input: &[i32], window_size: usize) -> Vec<i32> {
+    // Assume input size >= window size > 0
+    let input_size = input.len();
+    let mut result = Vec::new();
+    let middle_window_index = window_size / 2;
+
+    for start_index in 0..=(input_size-window_size) {
+        let mut window: Vec<i32> = input[start_index..start_index + window_size].to_vec();
+        window.sort();
+
+        if window_size % 2 == 0 {
+            let average = (window[middle_window_index - 1] + window[middle_window_index]) / 2;
+            result.push(average);
+        } else {
+            result.push(window[middle_window_index]);
+        }
+    }
+
+    result
+}
+
+// Given a Linked List that has value, next, and other, where other can point to any other element of the list, make a deep copy.
+// TODO
 
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
@@ -2328,6 +2371,57 @@ mod tests {
 
         let input = "";
         assert_eq!(first_non_repeating(input), -1);
+    }
+
+    #[test]
+    fn test_median_list_meta_phone_2025_06_03_basic() {
+        // Odd window size
+        let input = vec![1, 3, 2, 6, 7, 8, 9];
+        let window_size = 3;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        // Windows: [1,3,2]=2, [3,2,6]=3, [2,6,7]=6, [6,7,8]=7, [7,8,9]=8
+        assert_eq!(result, vec![2, 3, 6, 7, 8]);
+
+        // Even window size
+        let input = vec![1, 2, 3, 4, 5, 6];
+        let window_size = 4;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        // Windows: [1,2,3,4]=2, [2,3,4,5]=3, [3,4,5,6]=4
+        assert_eq!(result, vec![2, 3, 4]);
+    }
+
+    #[test]
+    fn test_median_list_meta_phone_2025_06_03_edge_cases() {
+        // Window size 1 (should return the input itself)
+        let input = vec![5, 4, 3, 2, 1];
+        let window_size = 1;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        assert_eq!(result, input);
+
+        // Window size equals input length (should return single median)
+        let input = vec![10, 20, 30, 40, 50];
+        let window_size = 5;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        // Sorted: [10,20,30,40,50] median is 30
+        assert_eq!(result, vec![30]);
+    }
+
+    #[test]
+    fn test_median_list_meta_phone_2025_06_03_duplicates_and_negatives() {
+        let input = vec![1, 2, 2, 2, 3, 4, 4, 5, -1, 0];
+        let window_size = 5;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        // Windows: [1,2,2,2,3]=2, [2,2,2,3,4]=2, [2,2,3,4,4]=3, [2,3,4,4,5]=4, [3,4,4,5,-1]=4, [4,4,5,-1,0]=4
+        assert_eq!(result, vec![2, 2, 3, 4, 4, 4]);
+    }
+
+    #[test]
+    fn test_median_list_meta_phone_2025_06_03_even_window_average() {
+        let input = vec![1, 2, 3, 4];
+        let window_size = 2;
+        let result = median_list_meta_phone_2025_06_03(&input, window_size);
+        // Windows: [1,2]=1, [2,3]=2, [3,4]=3 (since (1+2)/2=1, (2+3)/2=2, (3+4)/2=3)
+        assert_eq!(result, vec![1, 2, 3]);
     }
 
     #[test]
