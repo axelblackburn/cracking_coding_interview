@@ -345,6 +345,107 @@ pub fn daily_harder_2025_06_01_heapmin(lists: &[Vec<i32>]) -> Vec<i32> {
     result
 }
 
+// Given the root to a binary tree, implement serialize(root), which serializes the tree into a string, and deserialize(s), which deserializes the string back into the tree.
+// For example, given the following Node class
+// class Node:
+//    def __init__(self, val, left=None, right=None):
+//        self.val = val
+//        self.left = left
+//        self.right = right
+// The following test should pass:
+// node = Node('root', Node('left', Node('left.left')), Node('right'))
+// assert deserialize(serialize(node)).left.left.val == 'left.left'
+
+#[derive(Debug, PartialEq)]
+pub struct BinaryNode {
+    pub val: String,
+    pub left: Option<Box<BinaryNode>>,
+    pub right: Option<Box<BinaryNode>>,
+}
+
+impl BinaryNode {
+    pub fn new(val: impl Into<String>, left: Option<Box<BinaryNode>>, right: Option<Box<BinaryNode>>) -> Self {
+        BinaryNode {
+            val: val.into(),
+            left,
+            right,
+        }
+    }
+}
+
+pub fn serialize_daily_med_2025_06_02(root: &BinaryNode) -> String {
+    if root.val.contains('|') || root.val.contains(']') || root.val.contains('[') {
+        panic!("Invalid value");
+    }
+    let mut result = String::new();
+    result.push_str(&format!("[{}|", &root.val));
+    result.push_str(&match (&root.left, &root.right) {
+        (None, None) => "|".to_string(),
+        (Some(left), None) => format!("{}|", &serialize_daily_med_2025_06_02(&left)),
+        (None, Some(right)) => format!("|{}", &serialize_daily_med_2025_06_02(&right)),
+        (Some(left), Some(right)) => {
+            format!("{}|{}",
+                &serialize_daily_med_2025_06_02(&left),
+                &serialize_daily_med_2025_06_02(&right))
+        }
+    });
+    result.push(']');
+
+    result
+}
+
+pub fn deserialize_daily_med_2025_06_02(text: &str) -> Result<BinaryNode, String> {
+    if text.is_empty() {
+        return Err("Invalid input string".to_string());
+    }
+
+    let node_entries: Vec<&str> = text.split('[').collect();
+    if node_entries.len() == 2 {
+        // We found a leaf
+        let value = node_entries[1].split('|').collect::<Vec<&str>>()[0];
+        return Ok(BinaryNode { val: value.to_string(), left: None, right: None });
+    }
+
+    if !text.starts_with("[") || !text.ends_with("]") {
+        return Err("Missing outer brackets".into());
+    }
+
+    // Our node is between the first [ and the last ]
+    let inner = &text[1..text.len()-1];
+    let mut parts = Vec::new();
+    let mut bracket_count = 0; // +1 per [, -1 per ]
+    let mut last = 0;
+    for (i, c) in inner.char_indices() {
+        match c {
+            '[' => bracket_count += 1,
+            ']' => bracket_count -= 1,
+            '|' => if bracket_count == 0 {
+                parts.push(&inner[last..i]);
+                last = i + 1;
+            },
+            _ => {}
+        }
+    }
+    parts.push(&inner[last..]);
+    if parts.len() != 3 {
+        return Err(format!("Invalid format \"{}\"", inner));
+    }
+
+    let value = parts[0].to_string();
+    let left = if parts[1].is_empty() {
+        None
+    } else {
+        Some(Box::new(deserialize_daily_med_2025_06_02(parts[1])?))
+    };
+    let right = if parts[2].is_empty() {
+        None
+    } else {
+        Some(Box::new(deserialize_daily_med_2025_06_02(parts[2])?))
+    };
+
+    Ok(BinaryNode::new(value, left, right))
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -2134,6 +2235,51 @@ mod tests {
             let result = fun(&lists);
             assert_eq!(result, vec![-10, -8, -7, -5, -3, -2, 0, 1, 2]);
         }
+    }
+
+    #[test]
+    fn test_serialize_and_deserialize_daily_med_2025_06_02() {
+        // Case 1: Complex tree
+        let node = BinaryNode::new(
+            "root",
+            Some(Box::new(BinaryNode::new(
+                "left",
+                Some(Box::new(BinaryNode::new("left.left", None, None))),
+                None,
+            ))),
+            Some(Box::new(BinaryNode::new("right", None, None))),
+        );
+        let serialized = serialize_daily_med_2025_06_02(&node);
+        println!("{serialized}");
+        let deserialized = deserialize_daily_med_2025_06_02(&serialized).expect("Deserialization failed");
+        assert_eq!(deserialized.left.as_ref().unwrap().left.as_ref().unwrap().val, "left.left");
+
+        // Case 2: Empty string input
+        let result = deserialize_daily_med_2025_06_02("");
+        assert!(result.is_err());
+
+        // Case 3: Single-node tree
+        let solo = BinaryNode::new("solo", None, None);
+        let serialized = serialize_daily_med_2025_06_02(&solo);
+        let deserialized = deserialize_daily_med_2025_06_02(&serialized).unwrap();
+        assert_eq!(deserialized.val, "solo");
+        assert!(deserialized.left.is_none());
+        assert!(deserialized.right.is_none());
+
+        // Case 4: Left-heavy unbalanced tree
+        let unbalanced = BinaryNode::new(
+            "top",
+            Some(Box::new(BinaryNode::new(
+                "mid",
+                Some(Box::new(BinaryNode::new("bottom", None, None))),
+                None,
+            ))),
+            None,
+        );
+        let serialized = serialize_daily_med_2025_06_02(&unbalanced);
+        let deserialized = deserialize_daily_med_2025_06_02(&serialized).unwrap();
+        assert_eq!(deserialized.left.as_ref().unwrap().left.as_ref().unwrap().val, "bottom");
+        assert!(deserialized.right.is_none());
     }
 
     #[test]
