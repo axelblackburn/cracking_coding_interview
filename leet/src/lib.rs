@@ -439,6 +439,32 @@ pub fn deserialize_daily_med_2025_06_02(text: &str) -> Result<BinaryNode, String
     Ok(BinaryNode::new(value, left, right))
 }
 
+// Given a string s, find the first non-repeating character in it and return its index. If it does not exist, return -1.
+pub fn first_non_repeating(s: &str) -> isize {
+    struct Value {
+        i: isize,
+        single: bool,
+    }
+    let mut result = -1;
+
+    let mut encountered: HashMap<char, Value> = HashMap::new();
+    for (i, c) in s.char_indices() {
+        if let Some(value) = encountered.get_mut(&c) {
+            value.single = false;
+        } else {
+            encountered.insert(c, Value { i: i as isize, single: true });
+        }
+    }
+
+    for v in encountered.values().filter(|&v| v.single) {
+        if result == -1 || v.i < result {
+            result = v.i;
+        }
+    }
+
+    result
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -2287,6 +2313,21 @@ mod tests {
         // Invalid deserialization
         assert!(deserialize_daily_med_2025_06_02("[unclosed|node").is_err());
         assert!(deserialize_daily_med_2025_06_02("just text").is_err());
+    }
+
+    #[test]
+    fn test_first_non_repeating() {
+        let input = "leetcode";
+        assert_eq!(first_non_repeating(input), 0);
+
+        let input = "loveleetcode";
+        assert_eq!(first_non_repeating(input), 2);
+
+        let input = "aabb";
+        assert_eq!(first_non_repeating(input), -1);
+
+        let input = "";
+        assert_eq!(first_non_repeating(input), -1);
     }
 
     #[test]
