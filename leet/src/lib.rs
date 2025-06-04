@@ -2341,9 +2341,9 @@ pub enum RobotGridMove8_2 {
 }
 
 fn robot_grid_helper_8_2(
-    grid: &Vec<Vec<RobotGridCell8_2>>,
+    grid: &[Vec<RobotGridCell8_2>],
     row: usize, col: usize,
-    path: &mut VecDeque<RobotGridMove8_2>,
+    path: &mut Vec<RobotGridMove8_2>,
     failed: &mut HashSet<(usize, usize)>
 ) -> bool {
     use RobotGridCell8_2::*;
@@ -2366,12 +2366,12 @@ fn robot_grid_helper_8_2(
     }
 
     if robot_grid_helper_8_2(grid, row, col + 1, path, failed) {
-        path.push_front(RobotGridMove8_2::Right);
+        path.push(RobotGridMove8_2::Right);
         return true;
     }
 
     if robot_grid_helper_8_2(grid, row + 1, col, path, failed) {
-        path.push_front(RobotGridMove8_2::Down);
+        path.push(RobotGridMove8_2::Down);
         return true;
     }
 
@@ -2379,16 +2379,17 @@ fn robot_grid_helper_8_2(
     false
 }
 
-pub fn robot_grid_8_2(grid: &Vec<Vec<RobotGridCell8_2>>) -> Option<Vec<RobotGridMove8_2>> {
-    if grid.is_empty() {
+pub fn robot_grid_8_2(grid: &[Vec<RobotGridCell8_2>]) -> Option<Vec<RobotGridMove8_2>> {
+    if grid.is_empty() || grid[0].is_empty() {
         return None;
     }
 
-    let mut path = VecDeque::new();
+    let mut path = Vec::new();
     let mut failed = HashSet::new();
 
     if robot_grid_helper_8_2(grid, 0, 0, &mut path, &mut failed) {
-        Some(Vec::from(path))
+        path.reverse();
+        Some(path)
     } else {
         None
     }
