@@ -481,19 +481,12 @@ pub fn first_missing_daily_hard_2025_06_03(input: &mut Vec<i32>) -> u32 {
         }
     }
 
-    let mut lowest_integer = u32::MAX;
-    for i in 0..n {
-        if input[i] == 0 {
-            lowest_integer = (i + 1) as u32;
-            break;
+    for (i, &x) in input.iter().enumerate() {
+        if x == 0 {
+            return (i + 1) as u32;
         }
     }
-    if lowest_integer == u32::MAX {
-        // All > 0
-        lowest_integer = (n + 1) as u32;
-    }
-
-    lowest_integer
+    (n + 1) as u32
 }
 
 // Daily Medium 2025/06/04
