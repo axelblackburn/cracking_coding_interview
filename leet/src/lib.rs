@@ -446,6 +446,66 @@ pub fn deserialize_daily_med_2025_06_02(text: &str) -> Result<BinaryNode, String
 // For example, the input [3, 4, -1, 1] should give 2. The input [1, 2, 0] should give 3.
 // You can modify the input array in-place.
 
+pub fn first_missing_daily_hard_2025_06_03(input: &mut Vec<i32>) -> u32 {
+    // Let's use the array as such: for each index, it represents the integer index+1, meaning it represents [0..=n]
+    // As we explore the array, we rearrange it to move each found number to its location, leaving 0 where one is missing.
+    // Then we redo a pass to find the smallest index populated with 0.
+    let n = input.len();
+    for i in 0..n {
+        loop {
+            let found_value = input[i];
+            if found_value <= 0 {
+                // No work to be done, just mark it as available
+                input[i] = 0;
+                break;
+            }
+
+            let found_value_index = (found_value - 1) as usize; // Can't underflow
+            if found_value_index == i {
+                break;
+            }
+
+            if found_value_index < n {
+                let swapped_value = input[found_value_index];
+                input.swap(i, found_value_index);
+                if swapped_value == found_value || swapped_value == 0 {
+                    // We're done working on i
+                    input[i] = 0;
+                    break;
+                }
+            } else {
+                // Mark the slot as available
+                input[i] = 0;
+                break;
+            }
+        }
+    }
+
+    let mut lowest_integer = u32::MAX;
+    for i in 0..n {
+        if input[i] == 0 {
+            lowest_integer = (i + 1) as u32;
+            break;
+        }
+    }
+    if lowest_integer == u32::MAX {
+        // All > 0
+        lowest_integer = (n + 1) as u32;
+    }
+
+    lowest_integer
+}
+
+// Daily Medium 2025/06/04
+// cons(a, b) constructs a pair, and car(pair) and cdr(pair) returns the first and last element of that pair.
+// For example, car(cons(3, 4)) returns 3, and cdr(cons(3, 4)) returns 4.
+// Given this implementation of cons:
+// def cons(a, b):
+//    def pair(f):
+//        return f(a, b)
+//    return pair
+// Implement car and cdr.
+
 // TODO
 
 // https://www.reddit.com/r/cscareerquestions/comments/apu3ni/a_list_of_questions_i_was_asked_at_top_tech/
@@ -2395,6 +2455,48 @@ mod tests {
         // Invalid deserialization
         assert!(deserialize_daily_med_2025_06_02("[unclosed|node").is_err());
         assert!(deserialize_daily_med_2025_06_02("just text").is_err());
+    }
+
+    #[test]
+    fn test_first_missing_daily_hard_2025_06_03() {
+        // For example, the input [3, 4, -1, 1] should give 2. The input [1, 2, 0] should give 3.
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![3, 4, -1, 1]), 2);
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 2, 0]), 3);
+        // Edge case: empty input
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![]), 1);
+
+        // Edge case: all negative numbers
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![-3, -2, -1]), 1);
+
+        // Edge case: all positive, consecutive starting from 1
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 2, 3, 4, 5]), 6);
+
+        // Edge case: all positive, not starting from 1
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![2, 3, 4]), 1);
+
+        // Edge case: contains duplicates
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 1, 2, 2]), 3);
+
+        // Edge case: contains zero
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![0, 2, 2, 1]), 3);
+
+        // Edge case: large gap
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![100, 101, 102]), 1);
+
+        // Edge case: single element, not 1
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![5]), 1);
+
+        // Edge case: single element, 1
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1]), 2);
+
+        // Edge case: input with 1 missing in the middle
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 2, 4, 5]), 3);
+
+        // Edge case: input with 1 missing at the start
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![2, 3, 4, 5]), 1);
+
+        // Edge case: input with 1 missing at the end
+        assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 2, 3, 4]), 5);
     }
 
     #[test]
