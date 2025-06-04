@@ -616,6 +616,176 @@ pub fn deep_copy_meta_phone_2025_06_03(input: &Rc<RefCell<LinkedListWOther>>) ->
     old_to_new[&Rc::as_ptr(input)].clone()
 }
 
+/* We are creating a robot that moves from space to space in a grid printed on the floor.
+
+The room can be thought of as a rectangular map of cells. Each cell can have a single character printed in it. You will be given a two dimensional array of characters representing the room.
+
+Example:
+
+C/Java-ish:
+
+{
+  {' ', ' ', ' ', ' ', ' ', 'v'},
+  {' ', '>', ' ', '@', ' ', ' '},
+  {' ', '^', ' ', ' ', ' ', '<'}
+}
+
+// Infinite: no need to detect, but robot shall loop forever
+{
+  {' ', '>', ' ', ' ', ' ', 'v'},
+  {' ', ' ', ' ', '@', ' ', ' '},
+  {' ', '^', ' ', ' ', ' ', '<'}
+}
+
+// Out of Bound: panic!
+{        *
+  {' ', ' ', ' ', ' ', ' ', 'v'},
+  {' ', ' ', ' ', '@', ' ', ' '},
+  {' ', '^', ' ', ' ', ' ', '<'}
+}
+
+    The robot starts in the upper-left of the map, facing right.
+
+    Program the robot to move as follows:
+
+        1. Check halt condition: If the robot is standing on the ‘@’ character, print the coordinates of the current character and exit.
+
+        2. If standing on an “arrow” (‘>’, ‘^’, ‘<’, ‘v’), rotate to face the direction indicated.
+
+        3. Move forward to the next space.
+
+        4. Goto 1.
+
+    Program the robot so it will traverse map1 successfully.
+
+
+
+    Arithmetic: Subtraction.
+
+    Update movement rules. Before moving, check for these additional characters:
+
+        If the robot lands on a space with a digit printed on it, push the integer represented by the digit onto a stack.
+
+        If the robot lands on a space with a ‘-‘ sign, subtract the top two values on the stack and push the result. (stack subtraction order: a = pop(); b = pop(); push b-a;)
+
+    Update halt condition: If there is a value on top of the stack, return it to the user.
+
+
+C/Java-ish:
+
+{
+  { '8', ' ', ' ', ' ', ' ', ' ', ' ', 'v', ' ' },
+  { ' ', '>', ' ', ' ', '@', ' ', ' ', '5', ' ' },
+  { ' ', '^', ' ', '-', '1', ' ', '-', '<', ' ' }
+}
+
+
+*/
+
+pub enum Direction {
+    Up,
+    Down,
+    Right,
+    Left,
+}
+
+pub fn jed_unleash_robot(room: &Vec<Vec<char>>
+) -> Result<(usize, usize), String> {
+    use Direction::*;
+
+    if room.is_empty() {
+        return Err("Empty room".to_string());
+    }
+
+    let rows = room.len();
+    let cols = room[0].len();
+
+    let mut row = 0;
+    let mut col = 0;
+    let mut dir = Right;
+
+    loop {
+        if row >= rows || col >= cols {
+            return Err(format!("Robot exited room @ ({}, {})",
+                row, col).to_string());
+        }
+
+        match room[row][col] {
+            '@' => break,
+            '^' => dir = Up,
+            '>' => dir = Right,
+            '<' => dir = Left,
+            'v' => dir = Down,
+            _ => {}
+        }
+
+        match dir {
+            Up => row -= 1,
+            Down => row += 1,
+            Left => col -= 1,
+            Right => col += 1,
+        }
+    }
+
+    Ok((row, col))
+}
+
+pub fn jed_unleash_robot_substract(room: &Vec<Vec<char>>
+) -> Result<Option<i32>, String> {
+    use Direction::*;
+
+    if room.is_empty() {
+        return Err("Empty room".to_string());
+    }
+
+    let rows = room.len();
+    let cols = room[0].len();
+
+    let mut row = 0;
+    let mut col = 0;
+    let mut dir = Right;
+    let mut stack = Vec::new();
+
+    loop {
+        let c = room[row][col];
+        if row >= rows || col >= cols {
+            return Err(format!("Robot exited room @ ({}, {})",
+                row, col).to_string());
+        }
+
+        match room[row][col] {
+            '@' => break,
+            '^' => dir = Up,
+            '>' => dir = Right,
+            '<' => dir = Left,
+            'v' => dir = Down,
+            '-' => {
+                let err = Err("Cannot substract!");
+                match (stack.pop(), stack.pop()) {
+                    (None, None) => return err?,
+                    (None, _) => return err?,
+                    (_, None) => return err?,
+                    (Some(a), Some(b)) => stack.push(b - a),
+                }
+            },
+            _ => {}
+        }
+
+        if c >= '0' && c <= '9' {
+            stack.push((c as i32) - ('0' as i32));
+        }
+
+        match dir {
+            Up => row -= 1,
+            Down => row += 1,
+            Left => col -= 1,
+            Right => col += 1,
+        }
+    }
+
+    Ok(stack.pop())
+}
+
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
 
@@ -2145,6 +2315,85 @@ pub fn insertion_5_1(n: i32, m: i32, i: u8, j: u8) -> i32 {
     ((n as u32 & m_mask) | ((m as u32) << i)) as i32
 }
 
+// Problem 8.1: Triple Step
+// A child is running up a staircase with n steps and can hop either 1 step, 2 steps, or 3 steps at a time.
+// Implement a method to count how many possible ways the child can run up the stairs.
+
+pub fn triple_step_8_1(n: usize) -> usize {
+    amazon_num_ways_any_steps(n, &vec![1, 2, 3])
+}
+
+// Problem 8.2: Robot in a Grid
+// Imagine a robot sitting on the upper left corner of a grid with r rows and c columns.
+// The robot can only move in two directions: right and down, but certain cells are off-limit.
+// Design an algorithm to find a path for the robot from the top left to the bottom right.
+
+#[derive(Debug, PartialEq)]
+pub enum RobotGridCell8_2 {
+    Inaccessible,
+    Accessible,
+}
+
+#[derive(Debug, PartialEq)]
+pub enum RobotGridMove8_2 {
+    Right,
+    Down,
+}
+
+fn robot_grid_helper_8_2(
+    grid: &Vec<Vec<RobotGridCell8_2>>,
+    row: usize, col: usize,
+    path: &mut VecDeque<RobotGridMove8_2>,
+    failed: &mut HashSet<(usize, usize)>
+) -> bool {
+    use RobotGridCell8_2::*;
+
+    // Helper won't be called on empty grid
+    let rows = grid.len();
+    let cols = grid[0].len();
+
+
+    if row >= rows || col >= cols || grid[row][col] == Inaccessible {
+        return false;
+    }
+
+    if failed.contains(&(row, col)) {
+        return false;
+    }
+
+    if row == rows - 1 && col == cols - 1 {
+        return true;
+    }
+
+    if robot_grid_helper_8_2(grid, row, col + 1, path, failed) {
+        path.push_front(RobotGridMove8_2::Right);
+        return true;
+    }
+
+    if robot_grid_helper_8_2(grid, row + 1, col, path, failed) {
+        path.push_front(RobotGridMove8_2::Down);
+        return true;
+    }
+
+    failed.insert((row, col));
+    false
+}
+
+pub fn robot_grid_8_2(grid: &Vec<Vec<RobotGridCell8_2>>) -> Option<Vec<RobotGridMove8_2>> {
+    if grid.is_empty() {
+        return None;
+    }
+
+    let mut path = VecDeque::new();
+    let mut failed = HashSet::new();
+
+    if robot_grid_helper_8_2(grid, 0, 0, &mut path, &mut failed) {
+        Some(Vec::from(path))
+    } else {
+        None
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -2647,6 +2896,25 @@ mod tests {
             let copy_other = copy.borrow().other.as_ref().unwrap().clone();
             assert!(copy_nodes.iter().any(|n| Rc::ptr_eq(n, &copy_other)));
         }
+    }
+
+    #[test]
+    fn test_jed_unleash_robot() {
+        let room = vec![
+            vec![' ', ' ', ' ', ' ', ' ', 'v'],
+            vec![' ', '>', ' ', '@', ' ', ' '],
+            vec![' ', '^', ' ', ' ', ' ', '<'],
+        ];
+
+        assert_eq!(jed_unleash_robot(&room), Ok((1, 3)));
+
+        let room = vec![
+            vec!['8', ' ', ' ', ' ', ' ', ' ', ' ', 'v', ' '],
+            vec![' ', '>', ' ', ' ', '@', ' ', ' ', '5', ' '],
+            vec![' ', '^', ' ', '-', '1', ' ', '-', '<', ' '],
+        ];
+
+        assert_eq!(jed_unleash_robot_substract(&room), Ok(Some(2)));
     }
 
     #[test]
@@ -4148,5 +4416,23 @@ mod tests {
         let result = insertion_5_1(n, m, 2, 6);
         let expected = 0b100_0100_1100;
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_robot_grid_8_2() {
+        use RobotGridCell8_2::*;
+        use RobotGridMove8_2::*;
+
+        let grid = vec![
+            vec![Accessible, Accessible, Inaccessible],
+            vec![Inaccessible, Accessible, Accessible],
+            vec![Accessible, Inaccessible, Accessible],
+        ];
+
+        let result = robot_grid_8_2(&grid);
+        assert_eq!(
+            result,
+            Some(vec![Right, Down, Right, Down])
+        );
     }
 }
