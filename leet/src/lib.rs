@@ -499,7 +499,23 @@ pub fn first_missing_daily_hard_2025_06_03(input: &mut Vec<i32>) -> u32 {
 //    return pair
 // Implement car and cdr.
 
-// TODO
+pub type FuncDaily20250604<A, B, R> = Rc<dyn Fn(Box<dyn Fn(A, B) -> R>) -> R>;
+
+pub fn cons_daily_med_2025_06_04<A: Copy + 'static, B: Copy + 'static>(a: A, b: B) -> FuncDaily20250604<A, B, A> {
+    let data = Rc::new((a, b));
+    Rc::new(move |f: Box<dyn Fn(A, B) -> A>| {
+        let (a, b) = *data;
+        f(a, b)
+    })
+}
+
+pub fn car_daily_med_2025_06_04<A: Copy + 'static, B: Copy + 'static>(pair: &FuncDaily20250604<A, B, A>) -> A {
+    pair(Box::new(|a, _| a))
+}
+
+pub fn cdr_daily_med_2025_06_04<A: Copy + 'static, B: Copy + 'static>(pair: &FuncDaily20250604<A, B, B>) -> B {
+    pair(Box::new(|_, b| b))
+}
 
 // https://www.reddit.com/r/cscareerquestions/comments/apu3ni/a_list_of_questions_i_was_asked_at_top_tech/
 
@@ -2490,6 +2506,17 @@ mod tests {
 
         // Edge case: input with 1 missing at the end
         assert_eq!(first_missing_daily_hard_2025_06_03(&mut vec![1, 2, 3, 4]), 5);
+    }
+
+    #[test]
+    fn test_cons_car_cdr_daily_med_2025_06_04() {
+        let pair = cons_daily_med_2025_06_04(10, 20);
+        assert_eq!(car_daily_med_2025_06_04(&pair), 10);
+        assert_eq!(cdr_daily_med_2025_06_04(&pair), 20);
+
+        let pair = cons_daily_med_2025_06_04("hello", "world");
+        assert_eq!(car_daily_med_2025_06_04(&pair), "hello");
+        assert_eq!(cdr_daily_med_2025_06_04(&pair), "world");
     }
 
     #[test]
