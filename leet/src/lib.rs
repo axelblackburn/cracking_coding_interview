@@ -506,7 +506,46 @@ pub fn median_list_meta_phone_2025_06_03(input: &[i32], window_size: usize) -> V
 }
 
 // Given a Linked List that has value, next, and other, where other can point to any other element of the list, make a deep copy.
-// TODO
+pub struct LinkedListWOther {
+    value: i32,
+    next: Option<Rc<RefCell<LinkedListWOther>>>,
+    other: Option<Rc<RefCell<LinkedListWOther>>>,
+}
+
+pub fn deep_copy_meta_phone_2025_06_03(input: &Rc<RefCell<LinkedListWOther>>) -> Rc<RefCell<LinkedListWOther>> {
+    let mut old_to_new : HashMap<*const RefCell<LinkedListWOther>, Rc<RefCell<LinkedListWOther>>> = HashMap::new();
+
+    let mut input_runner = Some(Rc::clone(input));
+    while let Some(input_node) = input_runner {
+        let ptr = Rc::as_ptr(&input_node);
+        let new_node = Rc::new(RefCell::new(LinkedListWOther {
+            value: input_node.borrow().value,
+            next: None,
+            other: None,
+        }));
+        old_to_new.insert(ptr, Rc::clone(&new_node));
+
+        input_runner = input_node.borrow().next.clone();
+    }
+
+    let mut input_runner = Some(Rc::clone(input));
+    while let Some(input_node) = input_runner {
+        let new_node = old_to_new.get(&Rc::as_ptr(&input_node)).unwrap();
+        if let Some(old_next) = &input_node.borrow().next {
+            let new_next = old_to_new.get(&Rc::as_ptr(old_next)).unwrap();
+            new_node.borrow_mut().next = Some(new_next.clone());
+        }
+
+        if let Some(old_other) = &input_node.borrow().other {
+            let new_other = old_to_new.get(&Rc::as_ptr(old_other)).unwrap();
+            new_node.borrow_mut().other = Some(new_other.clone());
+        }
+
+        input_runner = input_node.borrow().next.clone();
+    }
+
+    old_to_new[&Rc::as_ptr(input)].clone()
+}
 
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
@@ -2422,6 +2461,70 @@ mod tests {
         let result = median_list_meta_phone_2025_06_03(&input, window_size);
         // Windows: [1,2]=1, [2,3]=2, [3,4]=3 (since (1+2)/2=1, (2+3)/2=2, (3+4)/2=3)
         assert_eq!(result, vec![1, 2, 3]);
+    }
+
+    #[test]
+    fn test_deep_copy_meta_phone_2025_06_03() {
+        // Helper to build a list of 3 nodes: 1 -> 2 -> 3, with .other pointers
+        let node1 = Rc::new(RefCell::new(LinkedListWOther {
+            value: 1,
+            next: None,
+            other: None,
+        }));
+        let node2 = Rc::new(RefCell::new(LinkedListWOther {
+            value: 2,
+            next: None,
+            other: None,
+        }));
+        let node3 = Rc::new(RefCell::new(LinkedListWOther {
+            value: 3,
+            next: None,
+            other: None,
+        }));
+
+        // Link next pointers
+        node1.borrow_mut().next = Some(node2.clone());
+        node2.borrow_mut().next = Some(node3.clone());
+
+        // Set .other pointers
+        node1.borrow_mut().other = Some(node3.clone()); // 1.other -> 3
+        node2.borrow_mut().other = Some(node1.clone()); // 2.other -> 1
+        node3.borrow_mut().other = Some(node2.clone()); // 3.other -> 2
+
+        // Deep copy
+        let copy_head = deep_copy_meta_phone_2025_06_03(&node1);
+
+        // Check values and structure
+        let orig_nodes = [node1, node2, node3];
+        let mut orig_runner = Some(orig_nodes[0].clone());
+        let mut copy_runner = Some(copy_head.clone());
+        let mut i = 0;
+        let mut copy_nodes = vec![];
+
+        // Collect copy nodes and check values
+        while let (Some(orig), Some(copy)) = (orig_runner, copy_runner) {
+            assert_eq!(orig.borrow().value, copy.borrow().value);
+            copy_nodes.push(copy.clone());
+            orig_runner = orig.borrow().next.clone();
+            copy_runner = copy.borrow().next.clone();
+            i += 1;
+        }
+        assert_eq!(i, 3);
+
+        // Check .other pointers point to correct nodes (by value, not by Rc address)
+        // and that copy nodes are not the same Rc as original nodes
+        for (orig, copy) in orig_nodes.iter().zip(copy_nodes.iter()) {
+            assert!(!Rc::ptr_eq(orig, copy));
+            let orig_other_val = orig.borrow().other.as_ref().unwrap().borrow().value;
+            let copy_other_val = copy.borrow().other.as_ref().unwrap().borrow().value;
+            assert_eq!(orig_other_val, copy_other_val);
+        }
+
+        // Check .other pointers in the copy point to nodes in the copy, not to original nodes
+        for copy in &copy_nodes {
+            let copy_other = copy.borrow().other.as_ref().unwrap().clone();
+            assert!(copy_nodes.iter().any(|n| Rc::ptr_eq(n, &copy_other)));
+        }
     }
 
     #[test]
