@@ -545,6 +545,127 @@ pub fn first_non_repeating(s: &str) -> isize {
     result
 }
 
+// Given a 2D grid having radio towers in some cells, mountains in some and the rest are empty.
+// A radio tower signal can travel in 4 different directions recursively
+// until it hits a mountain in that direction. What radio towers can hear each other?
+
+/*
+M = Mountain
+O = Open
+T = Tower
+
++------+------+------+------+------+
+| T    | O    | O    | O    | O    |
+| O    | O    | T    | M    | O    |
+| T    | M    | O    | T    | M    |
+| O    | T    | O    | M    | M    |
+| O    | O    | T    | O    | O    |
++------+------+------+------+------+
+
+Directions: no diagonal
+Tower's range? Unlimited.
+
+*/
+
+#[derive(PartialEq)]
+pub enum Terrain {
+    Mountain,
+    Open,
+    Tower,
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Coordinate {
+    row: usize,
+    col: usize,
+}
+
+pub fn who_can_talk_amazon_screen_2025_06_06(topology: &[Vec<Terrain>]) -> Vec<(Coordinate, Coordinate)> {
+    use Terrain::*;
+
+    // 1. Find the towers
+    // 2. For each tower, look in each direction for another unobstructed
+    // Only need to look right and down, up & left would have been found already
+    if topology.is_empty() || topology[0].is_empty() {
+        return Vec::new();
+    }
+
+    let mut result = Vec::new();
+    let mut towers = Vec::new();
+    let rows = topology.len();
+    let cols = topology[0].len();
+
+    for row in 0..rows {
+        for col in 0..cols {
+            if topology[row][col] == Tower {
+                towers.push(Coordinate { row, col });
+            }
+        }
+    }
+
+    for tower in towers {
+        let (row, col) = (tower.row, tower.col);
+
+        // Look right
+        for c in col + 1..cols {
+            match topology[row][c] {
+                Mountain => break,
+                Tower => {
+                    result.push((tower.clone(), Coordinate { row, col: c }));
+                    break;
+                },
+                Open => {},
+            }
+        }
+
+        // Look down
+        for r in row + 1..rows {
+            match topology[r][col] {
+                Mountain => break,
+                Tower => {
+                    result.push((tower.clone(), Coordinate { row: r, col }));
+                    break;
+                },
+                Open => {},
+            }
+        }
+    }
+
+    result
+}
+
+
+
+
+// Daily problem hard June 5th
+/*
+An XOR linked list is a more memory efficient doubly linked list.
+Instead of each node holding next and prev fields, it holds a field named both,
+which is an XOR of the next node and the previous node.
+Implement an XOR linked list; it has an add(element) which adds the element to the end,
+and a get(index) which returns the node at index.
+
+If using a language that has no pointers (such as Python),
+you can assume you have access to get_pointer and
+dereference_pointer functions that converts between nodes and memory addresses.
+*/
+
+pub struct NodeXOR {
+    value: i32,
+    both: usize,
+}
+
+pub struct ListXOR {
+    data: Vec<NodeXOR>,
+    head: Rc<RefCell<NodeXOR>>,
+    tail: Rc<RefCell<NodeXOR>>,
+}
+
+impl ListXOR {
+
+}
+
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -2782,6 +2903,33 @@ mod tests {
 
         let input = "";
         assert_eq!(first_non_repeating(input), -1);
+    }
+
+    #[test]
+    fn test_who_can_talk_amazon_screen_2025_06_06() {
+        use Terrain::*;
+        /*
+        +------+------+------+------+------+
+        | T    | O    | O    | O    | O    |
+        | O    | O    | T    | M    | O    |
+        | T    | M    | O    | T    | M    |
+        | O    | T    | O    | M    | M    |
+        | O    | O    | T    | O    | O    |
+        +------+------+------+------+------+
+         */
+        let topology = vec![
+            vec![Tower, Open,     Open,  Open,     Open],
+            vec![Open,  Open,     Tower, Mountain, Open],
+            vec![Tower, Mountain, Open,  Tower,    Mountain],
+            vec![Open,  Tower,    Open,  Mountain, Mountain],
+            vec![Open,  Open,     Tower, Open,     Open],
+        ];
+        let result = who_can_talk_amazon_screen_2025_06_06(&topology);
+        let expected = vec![
+            (Coordinate { row: 0, col: 0 }, Coordinate { row: 2, col: 0 }),
+            (Coordinate { row: 1, col: 2 }, Coordinate { row: 4, col: 2 }),
+        ];
+        assert_eq!(expected, result);
     }
 
     #[test]
