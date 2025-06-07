@@ -812,6 +812,47 @@ impl<'a> Iterator for ListXORIter<'a> {
     }
 }
 
+// Daily problem medium 2025 06 06
+/*
+Given the mapping a = 1, b = 2, ... z = 26, and an encoded message, count the number of ways it can be decoded.
+
+For example, the message '111' would give 3, since it could be decoded as 'aaa', 'ka', and 'ak'.
+
+You can assume that the messages are decodable. For example, '001' is not allowed.
+*/
+fn decode_ways_helper_2025_06_06<'a>(message: &'a str, memo: &mut HashMap<&'a str, usize>) -> usize {
+    if message.is_empty() {
+        return 1;
+    }
+
+    if message.starts_with('0') {
+        return 0;
+    }
+
+    if let Some(&cached) = memo.get(message) {
+        return cached;
+    }
+
+    let mut count = decode_ways_helper_2025_06_06(&message[1..], memo);
+
+    if message.len() >= 2 {
+        let num = &message[..2];
+        if let Ok(n) = num.parse::<u8>() {
+            if n <= 26 {
+                count += decode_ways_helper_2025_06_06(&message[2..], memo);
+            }
+        }
+    }
+
+    memo.insert(message, count);
+    count
+}
+
+pub fn decode_ways_2025_06_06(message: &str) -> usize {
+    let mut ways = HashMap::new();
+    decode_ways_helper_2025_06_06(message, &mut ways)
+}
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -3149,6 +3190,45 @@ mod tests {
         assert!(list.is_empty());
         assert_eq!(list.front(), None);
         assert_eq!(list.back(), None);
+    }
+
+    #[test]
+    fn test_decode_ways_2025_06_06_basic() {
+        // "12" -> "AB", "L"
+        assert_eq!(decode_ways_2025_06_06("12"), 2);
+
+        // "226" -> "BBF", "BZ", "VF"
+        assert_eq!(decode_ways_2025_06_06("226"), 3);
+
+        // "0" -> invalid
+        assert_eq!(decode_ways_2025_06_06("0"), 0);
+
+        // "06" -> invalid
+        assert_eq!(decode_ways_2025_06_06("06"), 0);
+
+        // "10" -> "J"
+        assert_eq!(decode_ways_2025_06_06("10"), 1);
+
+        // "27" -> "BG"
+        assert_eq!(decode_ways_2025_06_06("27"), 1);
+
+        // "101" -> "JA"
+        assert_eq!(decode_ways_2025_06_06("101"), 1);
+
+        // "100" -> invalid
+        assert_eq!(decode_ways_2025_06_06("100"), 0);
+
+        // "11106" -> "AAJF", "KJF"
+        assert_eq!(decode_ways_2025_06_06("11106"), 2);
+
+        // "111" -> "AAA", "KA", "AK"
+        assert_eq!(decode_ways_2025_06_06("111"), 3);
+
+        // "1234" -> "ABCD", "LCD", "AWD"
+        assert_eq!(decode_ways_2025_06_06("1234"), 3);
+
+        // "2611055971756562" (stress test, should not panic)
+        let _ = decode_ways_2025_06_06("2611055971756562");
     }
 
     #[test]
