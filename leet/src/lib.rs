@@ -757,8 +757,60 @@ impl ListXOR {
             Some(result)
         }
     }
+
+    pub fn get(&self, index: usize) -> Option<i32> {
+        let mut prev = null_mut();
+        let mut current = self.head;
+        let mut i = 0;
+
+        while !current.is_null() && i < index {
+            unsafe {
+                let next = ((*current).both ^ prev as usize) as *mut NodeXOR;
+                prev = current;
+                current = next;
+            }
+            i += 1;
+        }
+
+        if current.is_null() {
+            None
+        } else {
+            unsafe { Some((*current).value) }
+        }
+    }
+
+    pub fn iter(&self) -> ListXORIter<'_> {
+        ListXORIter {
+            prev: null_mut(),
+            current: self.head,
+            _marker: std::marker::PhantomData,
+        }
+    }
 }
 
+pub struct ListXORIter<'a> {
+    prev: *mut NodeXOR,
+    current: *mut NodeXOR,
+    _marker: std::marker::PhantomData<&'a NodeXOR>,
+}
+
+impl<'a> Iterator for ListXORIter<'a> {
+    type Item = i32;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.current.is_null() {
+            return None;
+        }
+
+        unsafe {
+            let next = ((*self.current).both ^ self.prev as usize) as *mut NodeXOR;
+            let val = (*self.current).value;
+            self.prev = self.current;
+            self.current = next;
+            Some(val)
+        }
+    }
+}
 
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
@@ -3066,8 +3118,10 @@ mod tests {
         list.push_back(30);
         list.push_front(40);
 
+        assert_eq!(list.get(3), Some(30));
         assert_eq!(list.front(), Some(40));
         assert_eq!(list.back(), Some(30));
+        assert_eq!(list.iter().collect::<Vec<_>>(), vec![40, 20, 10, 30]);
         assert_eq!(list.pop_back(), Some(30));
         assert_eq!(list.pop_front(), Some(40));
         assert_eq!(list.pop_back(), Some(10));
