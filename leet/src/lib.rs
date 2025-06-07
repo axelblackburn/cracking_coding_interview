@@ -6,6 +6,7 @@ use std::collections::HashMap;
 use std::collections::HashSet;
 use std::collections::LinkedList;
 use std::collections::VecDeque;
+use std::ptr::null_mut;
 use std::rc::Rc;
 use std::rc::Weak;
 
@@ -656,13 +657,106 @@ pub struct NodeXOR {
 }
 
 pub struct ListXOR {
-    data: Vec<NodeXOR>,
-    head: Rc<RefCell<NodeXOR>>,
-    tail: Rc<RefCell<NodeXOR>>,
+    data: VecDeque<Box<NodeXOR>>,
+    head: *mut NodeXOR,
+    tail: *mut NodeXOR,
 }
 
 impl ListXOR {
+    pub fn new() -> Self {
+        ListXOR { data: VecDeque::new(), head: null_mut(), tail: null_mut() }
+    }
 
+    pub fn is_empty(&self) -> bool {
+        self.head.is_null()
+    }
+
+    pub fn clear(&mut self) {
+        while let Some(_) = self.pop_front() {}
+    }
+
+    pub fn front(&self) -> Option<i32> {
+        unsafe { self.head.as_ref().map(|node| node.value) }
+    }
+
+    pub fn back(&self) -> Option<i32> {
+        unsafe { self.tail.as_ref().map(|node| node.value) }
+    }
+
+    pub fn push_front(&mut self, value: i32) {
+        let new_node = Box::new(NodeXOR { value, both: self.head as usize });
+        let new_ptr = &*new_node as *const NodeXOR as *mut NodeXOR;
+        if !self.head.is_null() {
+            unsafe {
+                (*self.head).both ^= new_ptr as usize;
+            }
+        } else {
+            self.tail = new_ptr;
+        }
+        self.head = new_ptr;
+        self.data.push_front(new_node);
+    }
+
+    pub fn push_back(&mut self, value: i32) {
+        let new_node = Box::new(NodeXOR { value, both: self.tail as usize });
+        let new_ptr = &*new_node as *const NodeXOR as *mut NodeXOR;
+        if !self.tail.is_null() {
+            unsafe {
+                (*self.tail).both ^= new_ptr as usize;
+            }
+        } else {
+            self.head = new_ptr;
+        }
+        self.tail = new_ptr;
+        self.data.push_back(new_node);
+    }
+
+    pub fn pop_front(&mut self) -> Option<i32> {
+        if self.head.is_null() {
+            return None;
+        }
+
+        unsafe {
+            let old_head = self.head;
+            let next_addr = (*old_head).both;
+            let result = (*old_head).value;
+
+            if next_addr == 0 {
+                // Only one element
+                self.head = null_mut();
+                self.tail = null_mut();
+            } else {
+                self.head = next_addr as *mut NodeXOR;
+                (*self.head).both ^= old_head as usize;
+            }
+
+            self.data.pop_front(); // drop the Box<NodeXOR> from VecDeque
+            Some(result)
+        }
+    }
+
+    pub fn pop_back(&mut self) -> Option<i32> {
+        if self.tail.is_null() {
+            return None;
+        }
+
+        unsafe {
+            let old_tail = self.tail;
+            let prev_addr = (*old_tail).both;
+            let result = (*old_tail).value;
+
+            if prev_addr == 0 {
+                self.head = null_mut();
+                self.tail = null_mut();
+            } else {
+                self.tail = prev_addr as *mut NodeXOR;
+                (*self.tail).both ^= old_tail as usize;
+            }
+
+            self.data.pop_back(); // drop the Box<NodeXOR> from VecDeque
+            Some(result)
+        }
+    }
 }
 
 
@@ -2930,6 +3024,77 @@ mod tests {
             (Coordinate { row: 1, col: 2 }, Coordinate { row: 4, col: 2 }),
         ];
         assert_eq!(expected, result);
+    }
+
+    #[test]
+    fn test_listxor_basic_operations() {
+        let mut list = ListXOR::new();
+        // Initially empty
+        assert!(list.is_empty());
+
+        // Push elements to the front and back
+        list.push_front(1);
+        assert_eq!(list.front(), Some(1));
+        assert_eq!(list.back(), Some(1));
+
+        list.push_back(2);
+        assert_eq!(list.front(), Some(1));
+        assert_eq!(list.back(), Some(2));
+
+        list.push_front(0);
+        assert_eq!(list.front(), Some(0));
+        assert_eq!(list.back(), Some(2));
+
+        // Pop from front and back
+        assert_eq!(list.pop_front(), Some(0));
+        assert_eq!(list.front(), Some(1));
+
+        assert_eq!(list.pop_back(), Some(2));
+        assert_eq!(list.back(), Some(1));
+
+        assert_eq!(list.pop_front(), Some(1));
+        assert!(list.is_empty());
+        assert_eq!(list.pop_back(), None);
+        assert_eq!(list.pop_front(), None);
+    }
+
+    #[test]
+    fn test_listxor_mixed_operations() {
+        let mut list = ListXOR::new();
+        list.push_back(10);
+        list.push_front(20);
+        list.push_back(30);
+        list.push_front(40);
+
+        assert_eq!(list.front(), Some(40));
+        assert_eq!(list.back(), Some(30));
+        assert_eq!(list.pop_back(), Some(30));
+        assert_eq!(list.pop_front(), Some(40));
+        assert_eq!(list.pop_back(), Some(10));
+        assert_eq!(list.pop_front(), Some(20));
+        assert!(list.is_empty());
+    }
+
+    #[test]
+    fn test_listxor_single_element() {
+        let mut list = ListXOR::new();
+        list.push_back(99);
+        assert_eq!(list.front(), Some(99));
+        assert_eq!(list.back(), Some(99));
+        assert_eq!(list.pop_front(), Some(99));
+        assert!(list.is_empty());
+    }
+
+    #[test]
+    fn test_listxor_clear() {
+        let mut list = ListXOR::new();
+        for i in 0..10 {
+            list.push_back(i);
+        }
+        list.clear();
+        assert!(list.is_empty());
+        assert_eq!(list.front(), None);
+        assert_eq!(list.back(), None);
     }
 
     #[test]
