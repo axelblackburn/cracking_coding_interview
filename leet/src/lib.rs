@@ -898,6 +898,44 @@ pub fn count_unival_daily_2025_06_07(root: &TreeNode<i32>) -> usize {
     count
 }
 
+// Daily Hard 2025/06/08
+/*
+Given a list of integers, write a function that returns the largest sum of non-adjacent numbers. Numbers can be 0 or negative.
+
+For example, [2, 4, 6, 2, 5] should return 13, since we pick 2, 6, and 5. [5, 1, 1, 5] should return 10, since we pick 5 and 5.
+
+Follow-up: Can you do this in O(N) time and constant space?
+*/
+pub fn largest_non_adjacent_sum_daily_2025_06_08(numbers: &[i32]) -> i32 {
+    if numbers.is_empty() {
+        return 0;
+    }
+
+    let (mut sum_2_before, mut sum_1_before) = (0, 0);
+    for (i, number) in numbers.iter().enumerate() {
+        if number <= &0 {
+            sum_2_before = sum_1_before.max(sum_2_before);
+            sum_1_before = sum_2_before;
+            continue;
+        }
+
+        if i == 0 {
+            sum_2_before = number.clone();
+            continue;
+        }
+        if i == 1 {
+            sum_1_before = number.clone();
+            continue;
+        }
+
+        let old_2_before = sum_2_before;
+        sum_2_before = sum_1_before.max(sum_2_before);
+        sum_1_before = sum_1_before.max(old_2_before + number);
+    }
+
+    sum_2_before.max(sum_1_before)
+}
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -3344,6 +3382,44 @@ mod tests {
             right: None,
         };
         assert_eq!(count_unival_daily_2025_06_07(&tree), 3);
+    }
+
+    #[test]
+    fn test_largest_non_adjacent_sum_daily_2025_06_08() {
+        // Example from the problem description
+        let numbers = vec![2, 4, 6, 2, 5];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 13);
+
+        let numbers = vec![5, 1, 1, 5];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 10);
+
+        // All negatives
+        let numbers = vec![-1, -2, -3, -4];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 0);
+
+        // All zeros
+        let numbers = vec![0, 0, 0, 0];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 0);
+
+        // Single element
+        let numbers = vec![7];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 7);
+
+        // Two elements
+        let numbers = vec![3, 10];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 10);
+
+        // Empty input
+        let numbers: Vec<i32> = vec![];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 0);
+
+        // Large input, alternating positives and negatives
+        let numbers = vec![10, -1, 20, -2, 30, -3, 40, -4, 50];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 150);
+
+        // Input with zeros and positives
+        let numbers = vec![0, 5, 0, 10, 0, 15];
+        assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 30);
     }
 
     #[test]
