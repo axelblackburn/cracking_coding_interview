@@ -853,6 +853,51 @@ pub fn decode_ways_2025_06_06(message: &str) -> usize {
     decode_ways_helper_2025_06_06(message, &mut ways)
 }
 
+// Daily Problem Easy 2025/06/07
+/*
+A unival tree (which stands for "universal value") is a tree where all nodes under it have the same value.
+
+Given the root to a binary tree, count the number of unival subtrees.
+
+For example, the following tree has 5 unival subtrees:
+
+   0
+  / \
+ 1   0
+    / \
+   1   0
+  / \
+ 1   1
+
+*/
+
+fn count_unival_helper_daily_2025_06_07(node: &TreeNode<i32>) -> (i32, usize) {
+    let (value, mut count) = (node.value, 0);
+    let mut node_is_unival = true;
+
+    if let Some(left) = &node.left {
+        let (left_univalue, left_count) = count_unival_helper_daily_2025_06_07(&left);
+        count += left_count;
+        node_is_unival &= value == left_univalue;
+    }
+    if let Some(right) = &node.right {
+        let (right_univalue, right_count) = count_unival_helper_daily_2025_06_07(&right);
+        count += right_count;
+        node_is_unival &= value == right_univalue;
+    }
+
+    if node_is_unival {
+        count += 1;
+    }
+
+    (value, count)
+}
+
+pub fn count_unival_daily_2025_06_07(root: &TreeNode<i32>) -> usize {
+    let (_, count) = count_unival_helper_daily_2025_06_07(root);
+    count
+}
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -3229,6 +3274,76 @@ mod tests {
 
         // "2611055971756562" (stress test, should not panic)
         let _ = decode_ways_2025_06_06("2611055971756562");
+    }
+
+    #[test]
+    fn test_count_unival_daily_2025_06_07() {
+        // Example from the problem description:
+        //    0
+        //   / \
+        //  1   0
+        //     / \
+        //    1   0
+        //   / \
+        //  1   1
+        let tree = TreeNode {
+            value: 0,
+            left: Some(Box::new(TreeNode {
+                value: 1,
+                left: None,
+                right: None,
+            })),
+            right: Some(Box::new(TreeNode {
+                value: 0,
+                left: Some(Box::new(TreeNode {
+                    value: 1,
+                    left: Some(Box::new(TreeNode::new(1))),
+                    right: Some(Box::new(TreeNode::new(1))),
+                })),
+                right: Some(Box::new(TreeNode::new(0))),
+            })),
+        };
+        assert_eq!(count_unival_daily_2025_06_07(&tree), 5);
+
+        // Single node (should be 1)
+        let tree = TreeNode::new(42);
+        assert_eq!(count_unival_daily_2025_06_07(&tree), 1);
+
+        // All nodes same value (full unival tree)
+        let tree = TreeNode {
+            value: 1,
+            left: Some(Box::new(TreeNode {
+                value: 1,
+                left: Some(Box::new(TreeNode::new(1))),
+                right: Some(Box::new(TreeNode::new(1))),
+            })),
+            right: Some(Box::new(TreeNode {
+                value: 1,
+                left: Some(Box::new(TreeNode::new(1))),
+                right: Some(Box::new(TreeNode::new(1))),
+            })),
+        };
+        assert_eq!(count_unival_daily_2025_06_07(&tree), 7);
+
+        // No unival subtrees except leaves
+        let tree = TreeNode {
+            value: 1,
+            left: Some(Box::new(TreeNode::new(2))),
+            right: Some(Box::new(TreeNode::new(3))),
+        };
+        assert_eq!(count_unival_daily_2025_06_07(&tree), 2);
+
+        // Left-skewed tree
+        let tree = TreeNode {
+            value: 1,
+            left: Some(Box::new(TreeNode {
+                value: 1,
+                left: Some(Box::new(TreeNode::new(1))),
+                right: None,
+            })),
+            right: None,
+        };
+        assert_eq!(count_unival_daily_2025_06_07(&tree), 3);
     }
 
     #[test]
