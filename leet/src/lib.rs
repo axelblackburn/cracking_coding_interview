@@ -936,6 +936,87 @@ pub fn largest_non_adjacent_sum_daily_2025_06_08(numbers: &[i32]) -> i32 {
     sum_2_before.max(sum_1_before)
 }
 
+/*
+Daily Medium 2025/06/10
+
+Implement an autocomplete system.
+That is, given a query string s and a set of all possible query strings,
+return all strings in the set that have s as a prefix.
+
+For example, given the query string de and the set of strings [dog, deer, deal], return [deer, deal].
+
+Hint: Try preprocessing the dictionary into a more efficient data structure to speed up queries.
+*/
+pub struct WordTreeNode {
+    character: Option<char>,
+    children: Vec<Box<WordTreeNode>>,
+}
+
+impl WordTreeNode {
+    pub fn new(value: Option<char>) -> Self {
+        WordTreeNode { character: value, children: Vec::new() }
+    }
+
+    pub fn add_word(&mut self, word: &str) {
+        let mut current_node = self;
+        for c in word.chars() {
+            let maybe_index = current_node.children.iter().position(|n| n.character == Some(c));
+            if let Some(idx) = maybe_index {
+                current_node = current_node.children.get_mut(idx).unwrap();
+            } else {
+                current_node.children.push(Box::new(WordTreeNode::new(Some(c))));
+                let last_idx = current_node.children.len() - 1;
+                current_node = current_node.children.get_mut(last_idx).unwrap();
+            }
+        }
+        // Push an empty node to mark the end of the word
+        current_node.children.push(Box::new(WordTreeNode::new(None)));
+    }
+}
+
+pub fn prefix_daily_2025_06_10(query: &str, queries: &[String]) -> Vec<String> {
+    // Construct a tree of words
+    let mut root = WordTreeNode::new(None);
+    for word in queries {
+        root.add_word(word);
+    }
+
+    // Search the tree for the prefix
+    let mut current_node = &root;
+    for c in query.chars() {
+        if let Some(child) = current_node.children.iter().find(|n| n.character == Some(c)) {
+            current_node = child;
+        } else {
+            return Vec::new(); // No match found
+        }
+    }
+
+    // Collect all words that start with the prefix
+    let mut result = Vec::new();
+    let mut stack = vec![(current_node, query.to_string())];
+
+    while let Some((node, current_prefix)) = stack.pop() {
+        if node.character.is_none() {
+            // We reached the end of a word
+            result.push(current_prefix);
+        } else {
+            // Continue with children
+            for child in &node.children {
+                let mut new_prefix = current_prefix.clone();
+                if let Some(c) = child.character {
+                    new_prefix.push(c);
+                }
+                stack.push((child, new_prefix));
+            }
+        }
+    }
+
+    // Sort the result to match the expected output
+    result.sort();
+
+    result
+}
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -3420,6 +3501,21 @@ mod tests {
         // Input with zeros and positives
         let numbers = vec![0, 5, 0, 10, 0, 15];
         assert_eq!(largest_non_adjacent_sum_daily_2025_06_08(&numbers), 30);
+    }
+
+    #[test]
+    fn test_prefix_daily_2025_06_10() {
+        // Prefix "de" and the set of strings [dog, deer, deal], return [deer, deal].
+        let prefix = "de";
+        let strings = vec!["dog".to_string(), "deer".to_string(), "deal".to_string()];
+        let result = prefix_daily_2025_06_10(prefix, &strings);
+        assert_eq!(result, vec!["deal", "deer"]);
+
+        // Prefix "cat" and the set of strings [cat, cater, category], return [cat, category, cater].
+        let prefix = "cat";
+        let strings = vec!["cat".to_string(), "cater".to_string(), "category".to_string()];
+        let result = prefix_daily_2025_06_10(prefix, &strings);
+        assert_eq!(result, vec!["cat", "category", "cater"]);
     }
 
     #[test]
