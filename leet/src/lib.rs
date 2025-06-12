@@ -1017,6 +1017,197 @@ pub fn prefix_daily_2025_06_10(query: &str, queries: &[String]) -> Vec<String> {
     result
 }
 
+// Daily 6/11 is already implemented on this page
+
+// Daily 6/12 Hard
+// Given an integer k and a string s, find the length of the longest substring that contains
+// at most k distinct characters.
+// For example, given s = "abcba" and k = 2, the longest substring with k distinct characters is "bcb".
+
+pub fn longest_substring_k_distinct_daily_2025_06_12(k: usize, s: &str) -> String {
+    if k == 0 || s.is_empty() {
+        return String::new();
+    }
+
+    let mut window_chars: HashMap<char, usize> = HashMap::new();
+    let (mut left, mut right) = (0, 0);
+    let (mut best_left, mut best_len) = (0, 0);
+    let chars: Vec<char> = s.chars().collect();
+
+    while right < chars.len() {
+        *window_chars.entry(chars[right]).or_insert(0) += 1;
+
+        while window_chars.len() > k {
+            if let Some(q) = window_chars.get_mut(&chars[left]) {
+                *q -= 1;
+                if *q == 0 {
+                    window_chars.remove(&chars[left]);
+                }
+            }
+            left += 1;
+        }
+
+        right += 1;
+        if best_len < right - left {
+            best_len = right - left;
+            best_left = left;
+        }
+    }
+
+    chars[best_left..best_left + best_len].iter().collect()
+}
+
+/*
+Zoox phone screen 2025/06/10
+/*
+Steering Problem
+
+A controls engineer has collected test data for a black box steering system to
+determine the amount of voltage that needs to be applied to hold the vehicle at a
+given steering angle. The data below shows that the voltage (V)
+required is a function of the steering angle (a).
+
+Test Data:
+a = -22,  -11, 0, 10,  20 degrees
+V = -1.5, -1,  0, 1.2, 1.8 volts
+
+The controls engineer would like to use this data as a feed forward term for the
+steering controller. Your job is to write a function to determine
+the best estimate for voltage (V) given a steering angle (a). aka. V = f(a).
+
+Example output:
+For a = 10; V = 1.2
+For a = 5; V = 0.6
+For a = 15; V = 1.5
+
+This problem uses a unit test framework called Catch. Use the example tests at the
+bottom of the file to test voltageEstimate, and feel free to add your own as well.
+*/
+
+// What happens outside the test data?
+// Just saturate: V in [-1.5,1.8] only
+
+// Unit testing framework
+#define CATCH_CONFIG_MAIN
+#include "catch.hpp"
+
+// Standard includes
+#include <iostream>
+#include <stdint.h>
+
+float voltageEstimate(const float a, const float a_data[], const float v_data[], size_t size) {
+  // Assumption: a_data & v_data are sorted!
+  // Assumption: a_data & v_data have the same size
+  // Assumption: size is valid > 0
+  // Normal case:
+  // Find 2 indexes in a_data that encompass a
+  // Return linear interpolation from v_data
+  // Edge case:
+  // Out of bound: saturate
+  if (a <= a_data[0]) {
+    return v_data[0]; // Left saturation
+  } else if (a >= a_data[size-1]) {
+    return v_data[size-1]; // Right saturation
+  } else {
+    for (size_t i = 1; i < size; i++) { // Skip 0, already tested
+      if (a <= a_data[i]) {
+        // Distance between a_data i-1 & i
+        // Distance between v_data i-1 & i
+        // Distance between a_data[i-1] & a
+        // (a - a_data[i-1]) / (v - v_data[i-1]) == (a_data[i] - a_data[i-1]) / (v_data[i] - v_data[i-1])
+        // (a - a_data[i-1]) == (v - v_data[i-1]) * (a_data[i] - a_data[i-1]) / (v_data[i] - v_data[i-1])
+        // (v - v_data[i-1]) == (a - a_data[i-1]) * (v_data[i] - v_data[i-1]) / (a_data[i] - a_data[i-1])
+        // v = (a - a_data[i-1]) * (v_data[i] - v_data[i-1]) / (a_data[i] - a_data[i-1]) + v_data[i-1]
+        float v = v_data[i-1] + (a - a_data[i-1]) * (v_data[i] - v_data[i-1]) / (a_data[i] - a_data[i-1]);
+        return v;
+      }
+    }
+  }
+
+  return 0;
+}
+
+TEST_CASE( "Steering Problem Test" ) {
+  const float a_data[]  =  {-22,  -11, 0, 10,  20}; // x-axis data
+  const float v_data[] =   {-1.5, -1,  0, 1.2, 1.8}; // y-axis data
+  const int size = 5;
+  float a, v_expected, v_test;
+
+  SECTION( "Example 1" ) {
+    // input angle
+    a = 10.0;
+    // expected output voltage
+    v_expected = 1.2;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, size);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+
+  SECTION( "Example 2" ) {
+    // input angle
+    a = 15.0;
+    // expected output voltage
+    v_expected = 1.5;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, size);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+
+  SECTION( "Example 3" ) {
+    // input angle
+    a = -16.5;
+    // expected output voltage
+    v_expected = -1.25;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, size);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+
+  SECTION( "Example 4" ) {
+    // input angle
+    a = -50;
+    // expected output voltage
+    v_expected = -1.5;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, size);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+
+  SECTION( "Example 5" ) {
+    // input angle
+    a = 50;
+    // expected output voltage
+    v_expected = 1.8;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, size);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+
+  SECTION( "Example 6" ) {
+    // input angle
+    a = 0;
+    // expected output voltage
+    v_expected = -1.5;
+    // call function under test
+    v_test = voltageEstimate(a, a_data, v_data, 1);
+
+    // check that our result is correct (within floating point error)
+    REQUIRE(v_expected == Approx(v_test));
+  }
+}
+
+*/
+
 // Given a non-empty binary search tree and a target value, find the value in the BST that is closest to the target.
 
 // TODO
@@ -1257,6 +1448,36 @@ pub fn jed_unleash_robot_substract(room: &Vec<Vec<char>>
 
     Ok(stack.pop())
 }
+
+// Project Euler Problem 1
+// Multiples of 3 and 5
+pub fn multiples_of_3_and_5(limit: u32) -> u32 {
+    (0..limit)
+        .filter(|&x| x % 3 == 0 || x % 5 == 0)
+        .sum()
+}
+
+// Project Euler Problem 2
+// Even Fibonacci numbers
+pub fn even_fibo_numbers_sum(limit: u64) -> u64 {
+    let mut sum_even = 0;
+    let mut fibo_n_minus_2 = 0;
+    let mut fibo_n_minus_1 = 1;
+
+    while fibo_n_minus_1 <= limit {
+        if fibo_n_minus_1 % 2 == 0 {
+            sum_even += fibo_n_minus_1;
+        }
+
+        let new_value = fibo_n_minus_2 + fibo_n_minus_1;
+        fibo_n_minus_2 = fibo_n_minus_1;
+        fibo_n_minus_1 = new_value;
+    }
+
+    sum_even
+}
+
+// Cracking the Coding Interview Problems
 
 // Problem 1.1: Is Unique
 // Implement an algorithm to determine if a string has all unique characters.
@@ -3519,6 +3740,48 @@ mod tests {
     }
 
     #[test]
+    fn test_longest_substring_k_distinct_daily_2025_06_12() {
+        // Basic cases with k = 2
+        let s = "eceba";
+        let k = 2;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "ece");
+
+        let s = "abcba";
+        let k = 2;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "bcb");
+
+        // Case with k = 1
+        let s = "aa";
+        let k = 1;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "aa");
+
+        // Case with no valid substring
+        let s = "abc";
+        let k = 0;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "");
+
+        // Case with all distinct characters
+        let s = "abcdef";
+        let k = 3;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "abc");
+
+        // Edge case: empty string
+        let s = "";
+        let k = 2;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "");
+
+        // Edge case: single character string
+        let s = "a";
+        let k = 1;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), "a");
+
+        // Stress test: long string with repeating patterns
+        let s = "abababababababababababababababababab";
+        let k = 2;
+        assert_eq!(longest_substring_k_distinct_daily_2025_06_12(k, s), s);
+    }
+
+    #[test]
     fn test_median_list_meta_phone_2025_06_03_basic() {
         // Odd window size
         let input = vec![1, 3, 2, 6, 7, 8, 9];
@@ -3650,6 +3913,36 @@ mod tests {
         ];
 
         assert_eq!(jed_unleash_robot_substract(&room), Ok(Some(2)));
+    }
+
+    #[test]
+    fn test_multiples_of_3_and_5() {
+        // Test with a small number
+        let result = multiples_of_3_and_5(10);
+        assert_eq!(result, 23); // 3 + 5 + 6 + 9
+
+        // Test with a larger number
+        let result = multiples_of_3_and_5(1000);
+        assert_eq!(result, 233168); // Known result for 1000
+
+        // Test with a number less than 3
+        let result = multiples_of_3_and_5(2);
+        assert_eq!(result, 0); // No multiples of 3 or 5 below 3
+    }
+
+    #[test]
+    fn test_even_fibo_numbers_sum() {
+        // Test with a small limit
+        let result = even_fibo_numbers_sum(10);
+        assert_eq!(result, 10); // 2 + 8
+
+        // Test with a larger limit
+        let result = even_fibo_numbers_sum(4000000);
+        assert_eq!(result, 4613732); // Known result for 4 million
+
+        // Test with a limit less than the first even Fibonacci number
+        let result = even_fibo_numbers_sum(1);
+        assert_eq!(result, 0); // No even Fibonacci numbers below 2
     }
 
     #[test]
