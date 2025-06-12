@@ -3088,6 +3088,17 @@ pub fn robot_grid_8_2(grid: &[Vec<RobotGridCell8_2>]) -> Option<Vec<RobotGridMov
     }
 }
 
+// Chapter 16: Moderate problems
+
+// Problem 16.1: Number Swapper
+// Write a function to swap a number in place (that is, without temporary variables).
+
+pub fn number_swapper_16_1(a: &mut i32, b: &mut i32) {
+    *a += *b;
+    *b = *a - *b;
+    *a = *a - *b;
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -5462,5 +5473,26 @@ mod tests {
             result,
             Some(vec![Right, Down, Right, Down])
         );
+    }
+
+    #[test]
+    fn test_number_swapper_16_1() {
+        let mut a = 5;
+        let mut b = 10;
+        number_swapper_16_1(&mut a, &mut b);
+        assert_eq!(a, 10);
+        assert_eq!(b, 5);
+
+        let mut x = -3;
+        let mut y = 7;
+        number_swapper_16_1(&mut x, &mut y);
+        assert_eq!(x, 7);
+        assert_eq!(y, -3);
+
+        let mut p = 0;
+        let mut q = 0;
+        number_swapper_16_1(&mut p, &mut q);
+        assert_eq!(p, 0);
+        assert_eq!(q, 0);
     }
 }
