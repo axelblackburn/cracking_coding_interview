@@ -3201,6 +3201,33 @@ pub fn tic_tac_win_16_4(board: TicTac, player: TicTacSymbol, last_move: (usize, 
     false
 }
 
+// Problem 16.5: Factorial Zeros
+// Write a method to count the number of trailing zeros in n factorial.
+
+pub fn factorial_zeros_16_5(n: usize) -> usize {
+    // We want to count each value <= n that has (2, 5) as a prime factor
+    // There are way more 2s in n! than numbers dividable by 5, so we only need to track 5s
+    let mut zeroes = 0;
+
+    // Naive version
+    // for i in 5..=n {
+    //     let mut div5 = i;
+    //     while div5 % 5 == 0 {
+    //         zeroes += 1;
+    //         div5 /= 5;
+    //     }
+    // }
+
+    // logN version
+    let mut n = n;
+    while n >= 5 {
+        n /= 5;
+        zeroes += n;
+    }
+
+    zeroes
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -5681,5 +5708,16 @@ mod tests {
         // Empty board
         let board: TicTac = vec![];
         assert!(!tic_tac_win_16_4(board.clone(), X, (0, 0)));
+    }
+
+
+    #[test]
+    fn test_factorial_zeros_16_5() {
+        assert_eq!(factorial_zeros_16_5(0), 0);
+        assert_eq!(factorial_zeros_16_5(4), 0);   // 4! = 24
+        assert_eq!(factorial_zeros_16_5(5), 1);   // 5! = 120
+        assert_eq!(factorial_zeros_16_5(10), 2);  // 10! = 3628800
+        assert_eq!(factorial_zeros_16_5(25), 6);  // 25! has extra 5s from 25
+        assert_eq!(factorial_zeros_16_5(100), 24);
     }
 }
