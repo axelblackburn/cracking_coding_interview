@@ -3115,6 +3115,92 @@ pub fn word_frequencies_16_2(book: &str) -> HashMap<&str, usize> {
     result
 }
 
+// Problem 16.3: Intersection
+// Given two arrays, write a method to compute their intersection.
+
+// Problem 16.4: Tic Tac Win
+// Given a game board (represented as a 2D array) and a player's symbol, determine if the player has won the game.
+
+#[derive(Debug, PartialEq, Eq, Clone)]
+pub enum TicTacSymbol {
+    Circle,
+    Cross,
+    Empty,
+}
+
+pub type TicTac = Vec<Vec<TicTacSymbol>>;
+
+pub fn tic_tac_win_16_4(board: TicTac, player: TicTacSymbol, last_move: (usize, usize)) -> bool {
+    if player == TicTacSymbol::Empty {
+        return false;
+    }
+
+    if board.is_empty() || board[0].is_empty() {
+        return false;
+    }
+
+    let n = board.len();
+    if n != board[0].len() {
+        // Can't do diagonals on a non-square board
+        return false;
+    }
+
+    if last_move.0 >= n || last_move.1 >= n {
+        return false;
+    }
+
+    let mut horizontal_win = true;
+    for col in 0..n {
+        if board[last_move.0][col] != player {
+            horizontal_win = false;
+            break;
+        }
+    }
+    if horizontal_win {
+        return true;
+    }
+
+    let mut vertical_win = true;
+    for row in 0..n {
+        if board[row][last_move.1] != player {
+            vertical_win = false;
+            break;
+        }
+    }
+    if vertical_win {
+        return true;
+    }
+
+    if last_move.0 == last_move.1 {
+        let mut descending_diagonal_win = true;
+        for i in 0..n {
+            if board[i][i] != player {
+                descending_diagonal_win = false;
+                break;
+            }
+
+        }
+        if descending_diagonal_win {
+            return true;
+        }
+    }
+
+    if last_move.0 == n - 1 - last_move.1 {
+        let mut ascending_diagonal_win = true;
+        for i in 0..n {
+            if board[i][n-1-i] != player {
+                ascending_diagonal_win = false;
+                break;
+            }
+        }
+        if ascending_diagonal_win {
+            return true;
+        }
+    }
+
+    false
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -5539,5 +5625,61 @@ mod tests {
         let mut expected = HashMap::new();
         expected.insert("singleword", 1);
         assert_eq!(frequencies, expected);
+    }
+
+    #[test]
+    fn test_tic_tac_win() {
+        use TicTacSymbol::{Circle as O, Cross as X, Empty as E};
+
+        // Row win
+        let board = vec![
+            vec![X, X, X],
+            vec![O, O, E],
+            vec![E, E, E],
+        ];
+        assert!(tic_tac_win_16_4(board.clone(), X, (0, 2)));
+
+        // Column win
+        let board = vec![
+            vec![O, X, E],
+            vec![O, X, E],
+            vec![O, E, E],
+        ];
+        assert!(tic_tac_win_16_4(board.clone(), O, (2, 0)));
+
+        // Main diagonal win
+        let board = vec![
+            vec![X, O, E],
+            vec![O, X, E],
+            vec![E, E, X],
+        ];
+        assert!(tic_tac_win_16_4(board.clone(), X, (2, 2)));
+
+        // Anti-diagonal win
+        let board = vec![
+            vec![E, E, X],
+            vec![E, X, E],
+            vec![X, E, E],
+        ];
+        assert!(tic_tac_win_16_4(board.clone(), X, (2, 0)));
+
+        // No win
+        let board = vec![
+            vec![X, O, X],
+            vec![O, X, O],
+            vec![O, X, O],
+        ];
+        assert!(!tic_tac_win_16_4(board.clone(), X, (2, 1)));
+
+        // Invalid move
+        let board = vec![
+            vec![X, O],
+            vec![O, X],
+        ];
+        assert!(!tic_tac_win_16_4(board.clone(), X, (2, 2)));
+
+        // Empty board
+        let board: TicTac = vec![];
+        assert!(!tic_tac_win_16_4(board.clone(), X, (0, 0)));
     }
 }
