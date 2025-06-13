@@ -3099,6 +3099,22 @@ pub fn number_swapper_16_1(a: &mut i32, b: &mut i32) {
     *a = *a - *b;
 }
 
+// Problem 16.2: Word Frequencies
+// Design a method to find the frequency of occurrences of any given word in a book.
+
+pub fn word_frequencies_16_2(book: &str) -> HashMap<&str, usize> {
+    let mut result = HashMap::new();
+
+    for word in book.split(|c: char| !c.is_alphabetic() ) {
+        // Storing word.to_lowercase() would be better, but it requires more memory
+        if !word.is_empty() {
+            *result.entry(word).or_insert(0) += 1;
+        }
+    }
+
+    result
+}
+
 #[cfg(test)]
 mod tests {
     use rand::seq::SliceRandom;
@@ -5494,5 +5510,34 @@ mod tests {
         number_swapper_16_1(&mut p, &mut q);
         assert_eq!(p, 0);
         assert_eq!(q, 0);
+    }
+
+    #[test]
+    fn test_word_frequencies_16_2() {
+        let text = "hello world hello";
+        let frequencies = word_frequencies_16_2(text);
+        let mut expected = HashMap::new();
+        expected.insert("hello", 2);
+        expected.insert("world", 1);
+        assert_eq!(frequencies, expected);
+
+        let text = "rust is great rust is fun";
+        let frequencies = word_frequencies_16_2(text);
+        let mut expected = HashMap::new();
+        expected.insert("rust", 2);
+        expected.insert("is", 2);
+        expected.insert("great", 1);
+        expected.insert("fun", 1);
+        assert_eq!(frequencies, expected);
+
+        let text = "";
+        let frequencies = word_frequencies_16_2(text);
+        assert!(frequencies.is_empty());
+
+        let text = "singleword";
+        let frequencies = word_frequencies_16_2(text);
+        let mut expected = HashMap::new();
+        expected.insert("singleword", 1);
+        assert_eq!(frequencies, expected);
     }
 }
